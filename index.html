@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindHer - Image Search</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/modal.css">
+    <link rel="stylesheet" href="assets/css/navigation.css">
+    <link rel="stylesheet" href="assets/css/upload.css">
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="upload-box">
+                <div class="upload-icon">+</div>
+                <div class="upload-text">Upload Photo</div>
+                <input type="file" id="photoInput" accept="image/*" hidden>
+            </div>
+        </div>
+
+        <!-- Preview Section (hidden by default) -->
+        <div class="preview-section" style="display: none;">
+            <img id="previewImage" src="" alt="Preview">
+        </div>
+    </div>
+
+    <!-- Modal for Tariffs -->
+    <div class="modal" id="tariffModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choose Your Plan</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tariff-option">
+                    <h3>Basic</h3>
+                    <p class="price">24 USDT</p>
+                    <p class="details">1 search</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+                <div class="tariff-option">
+                    <h3>Standard</h3>
+                    <p class="price">34 USDT</p>
+                    <p class="details">2 searches</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+                <div class="tariff-option">
+                    <h3>Premium</h3>
+                    <p class="price">50 USDT</p>
+                    <p class="details">4 searches</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+                <div class="tariff-option">
+                    <h3>Ultimate</h3>
+                    <p class="price">69 USDT</p>
+                    <p class="details">6 searches</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-page="search">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-text">Search</span>
+        </button>
+        <button class="nav-item" data-page="tariffs">
+            <span class="nav-icon">💎</span>
+            <span class="nav-text">Tariffs</span>
+        </button>
+        <button class="nav-item" data-page="history">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">History</span>
+        </button>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="assets/js/handlers/telegram.js"></script>
+    <script src="assets/js/handlers/upload.js"></script>
+    <script src="assets/js/handlers/modal.js"></script>
+    <script src="assets/js/handlers/navigation.js"></script>
+    <script src="assets/js/utils/validation.js"></script>
+    <script src="assets/js/utils/helpers.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html> 

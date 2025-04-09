@@ -1,0 +1,64 @@
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    border-top: 1px solid var(--primary-color);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.nav-item.active {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.nav-icon {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+}
+
+.nav-text {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nav-item:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+/* Add safe area padding for iOS devices */
+@supports (padding: max(0px)) {
+    .bottom-nav {
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+}
+
+/* Responsive adjustments */
+@media (min-width: 769px) {
+    .bottom-nav {
+        max-width: 800px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+    
+    .nav-text {
+        font-size: 0.9rem;
+    }
+} 
