@@ -1,92 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FindHer - Image Search</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="assets/css/main.css">
+    <title>FindHer - Поиск по фото</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/modal.css">
-    <link rel="stylesheet" href="assets/css/navigation.css">
-    <link rel="stylesheet" href="assets/css/upload.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- App Header -->
-    <header class="app-header">
-        <h1>FindHer</h1>
-        <p>Upload your photo to search where it appears online</p>
-    </header>
-
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Upload Section -->
-        <div class="upload-section">
-            <div class="upload-box">
-                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                <div class="upload-text">Upload Photo</div>
-                <div class="upload-subtext">Click or drag & drop your image here</div>
-                <div class="drag-text">Maximum size: 5MB</div>
-                <input type="file" id="photoInput" accept="image/*" hidden>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <h1>FindHer</h1>
+                <span class="tagline">Поиск изображений по фото</span>
             </div>
-        </div>
+            <nav class="app-nav">
+                <a href="#" class="view-history-btn">История поиска</a>
+            </nav>
+        </header>
 
-        <!-- Preview Section (hidden by default) -->
-        <div class="preview-section" style="display: none;">
-            <img id="previewImage" src="" alt="Preview">
-            <div class="preview-controls">
-                <button class="preview-control-btn search-btn">
-                    <i class="fas fa-search"></i> Start Search
-                </button>
-                <button class="preview-control-btn reset-btn">
-                    <i class="fas fa-redo-alt"></i> Reset
-                </button>
+        <main class="app-content">
+            <div class="content-area">
+                <!-- Upload Section -->
+                <section id="uploadSection" class="upload-section">
+                    <h2>Загрузите изображение для поиска</h2>
+                    <div class="upload-container">
+                        <div id="previewContainer" class="file-preview-container">
+                            <img id="filePreview" src="" alt="Предпросмотр" style="display: none;">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="file-details">
+                                <span id="fileName">Файл не выбран</span>
+                            </div>
+                        </div>
+                        <div class="upload-actions">
+                            <button id="uploadBtn" class="btn upload-btn">
+                                <i class="fas fa-upload"></i> Выбрать файл
+                            </button>
+                            <input type="file" id="fileUpload" accept="image/*" style="display: none;">
+                            <button id="clearBtn" class="btn clear-btn" style="display: none;">
+                                <i class="fas fa-times"></i> Очистить
+                            </button>
+                        </div>
+                    </div>
+                    <div class="search-action">
+                        <button id="startSearch" class="btn search-btn" disabled>
+                            <i class="fas fa-search"></i> Начать поиск
+                        </button>
+                    </div>
+                </section>
+
+                <!-- History Section -->
+                <section id="historySection" class="history-section" style="display: none;">
+                    <div class="history-header">
+                        <h2>История поиска</h2>
+                        <button id="backToUpload" class="btn">
+                            <i class="fas fa-arrow-left"></i> Назад
+                        </button>
+                    </div>
+                    <div id="historyContainer" class="search-results-list">
+                        <!-- Results will be added dynamically -->
+                    </div>
+                </section>
             </div>
-        </div>
+
+            <!-- Platforms Selection Modal -->
+            <div id="platformsModal" class="modal">
+                <div class="modal-content platforms-modal">
+                    <div class="modal-header">
+                        <h3>Выберите платформу для поиска</h3>
+                        <button class="close-modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-description">
+                            Выберите платформу, на которой хотите найти изображение
+                        </p>
+                        <div class="platform-options">
+                            <div class="platform-option" data-platform="OnlyFans">
+                                <div class="platform-icon">
+                                    <i class="fab fa-think-peaks"></i>
+                                </div>
+                                <div class="platform-name">OnlyFans</div>
+                            </div>
+                            <div class="platform-option" data-platform="FanVue">
+                                <div class="platform-icon">
+                                    <i class="fab fa-product-hunt"></i>
+                                </div>
+                                <div class="platform-name">FanVue</div>
+                            </div>
+                        </div>
+                        <div class="platform-info">
+                            <p>Тариф по умолчанию: <span>Базовый (30 кредитов)</span></p>
+                        </div>
+                        <div class="modal-actions">
+                            <button id="startPlatformSearch" class="btn btn-primary" disabled>
+                                Начать поиск
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Progress Modal -->
+            <div id="searchProgressModal" class="modal">
+                <div class="modal-content progress-modal">
+                    <div class="modal-header">
+                        <h3>Выполняется поиск</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="progress-animation">
+                            <div class="search-loader"></div>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-track">
+                                <div class="progress-fill"></div>
+                            </div>
+                            <div class="progress-info">
+                                <span class="search-status">Поиск изображения...</span>
+                                <span class="search-progress">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Results Modal -->
+            <div id="searchResultsModal" class="modal">
+                <div class="modal-content results-modal">
+                    <div class="modal-header">
+                        <h3>Результат поиска</h3>
+                        <button class="close-modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="search-summary">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                        <div class="modal-actions">
+                            <button id="viewResults" class="btn btn-primary">
+                                Смотреть историю
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>© 2023 FindHer. Все права защищены.</p>
+        </footer>
     </div>
 
-    <!-- Modal for Tariffs -->
-    <div class="modal" id="tariffModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Choose Your Plan</h2>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="tariff-option">
-                    <h3>Standard</h3>
-                    <p class="price">8.99 USDT</p>
-                    <p class="details">1 search</p>
-                    <button class="select-tariff">Select Plan</button>
-                </div>
-                <div class="tariff-option best-value">
-                    <div class="best-value-badge">Best Value</div>
-                    <h3>Premium</h3>
-                    <p class="price">24.99 USDT</p>
-                    <p class="details">5 searches</p>
-                    <button class="select-tariff">Select Plan</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" data-page="search">
-            <span class="nav-icon"><i class="fas fa-search"></i></span>
-            <span class="nav-text">Search</span>
-        </button>
-        <button class="nav-item" data-page="tariffs">
-            <span class="nav-icon"><i class="fas fa-gem"></i></span>
-            <span class="nav-text">Tariffs</span>
-        </button>
-        <button class="nav-item" data-page="history">
-            <span class="nav-icon"><i class="fas fa-history"></i></span>
-            <span class="nav-text">History</span>
-        </button>
-    </nav>
-
-    <!-- Scripts -->
-    <script src="assets/js/bundle.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 </html> 

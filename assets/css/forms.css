@@ -1,0 +1,406 @@
+/* Forms CSS */
+
+/* Form Container */
+.form-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background-color: var(--color-background-light);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Form Label */
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+}
+
+.form-label.required:after {
+    content: "*";
+    color: var(--color-danger);
+    margin-left: 0.25rem;
+}
+
+/* Form Input */
+.form-input {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    background-color: var(--color-background);
+    background-clip: padding-box;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus {
+    border-color: var(--color-primary);
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.25);
+}
+
+.form-input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.6;
+}
+
+.form-input:disabled,
+.form-input[readonly] {
+    background-color: var(--color-background-disabled);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Form Textarea */
+.form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Form Select */
+.form-select {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    background-color: var(--color-background);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='12' viewBox='0 0 8 12'%3E%3Cpath fill='%23343a40' d='M4 8L0 4h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    appearance: none;
+}
+
+.form-select:focus {
+    border-color: var(--color-primary);
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.25);
+}
+
+/* Form Checkbox & Radio */
+.form-check {
+    display: flex;
+    align-items: center;
+    padding-left: 0;
+    margin-bottom: 0.5rem;
+}
+
+.form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+    cursor: pointer;
+}
+
+.form-check-label {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+/* Custom Radio */
+.custom-radio {
+    position: relative;
+    padding-left: 2.5rem;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0.5rem;
+}
+
+.custom-radio input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.radio-checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1.25rem;
+    width: 1.25rem;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+}
+
+.custom-radio:hover input ~ .radio-checkmark {
+    background-color: var(--color-background-hover);
+}
+
+.custom-radio input:checked ~ .radio-checkmark {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.radio-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-radio input:checked ~ .radio-checkmark:after {
+    display: block;
+}
+
+.custom-radio .radio-checkmark:after {
+    top: 0.3rem;
+    left: 0.3rem;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: white;
+}
+
+/* Custom Checkbox */
+.custom-checkbox {
+    position: relative;
+    padding-left: 2.5rem;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0.5rem;
+}
+
+.custom-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkbox-checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1.25rem;
+    width: 1.25rem;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+}
+
+.custom-checkbox:hover input ~ .checkbox-checkmark {
+    background-color: var(--color-background-hover);
+}
+
+.custom-checkbox input:checked ~ .checkbox-checkmark {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.checkbox-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-checkbox input:checked ~ .checkbox-checkmark:after {
+    display: block;
+}
+
+.custom-checkbox .checkbox-checkmark:after {
+    left: 0.45rem;
+    top: 0.2rem;
+    width: 0.3rem;
+    height: 0.6rem;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Form Range */
+.form-range {
+    width: 100%;
+    height: 1.5rem;
+    padding: 0;
+    background-color: transparent;
+    appearance: none;
+}
+
+.form-range:focus {
+    outline: none;
+}
+
+.form-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    background-color: var(--color-primary);
+    border: 0;
+    border-radius: 50%;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    cursor: pointer;
+    margin-top: -0.5rem;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 0.25rem;
+    background-color: var(--color-background-disabled);
+    border-radius: 1rem;
+}
+
+/* Form File */
+.form-file {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: calc(1.5em + 1.5rem + 2px);
+    margin-bottom: 0;
+}
+
+.form-file-input {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: calc(1.5em + 1.5rem + 2px);
+    margin: 0;
+    opacity: 0;
+}
+
+.form-file-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1;
+    height: calc(1.5em + 1.5rem + 2px);
+    padding: 0.75rem 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.form-file-text {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.form-file-button {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    margin-left: 0.75rem;
+    color: var(--color-text-primary);
+    background-color: var(--color-background-disabled);
+    border-left: 1px solid var(--color-border);
+    border-radius: 0 3px 3px 0;
+}
+
+/* File Upload Drop Zone */
+.file-drop-zone {
+    padding: 2rem;
+    text-align: center;
+    border: 2px dashed var(--color-border);
+    border-radius: 5px;
+    background-color: var(--color-background-light);
+    transition: border-color 0.2s ease;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.file-drop-zone.active {
+    border-color: var(--color-primary);
+    background-color: rgba(66, 153, 225, 0.05);
+}
+
+.file-drop-zone:hover {
+    border-color: var(--color-primary-hover);
+}
+
+.file-drop-zone-icon {
+    font-size: 2.5rem;
+    color: var(--color-text-muted);
+    margin-bottom: 1rem;
+}
+
+.file-drop-zone-text {
+    margin-bottom: 0.5rem;
+    color: var(--color-text-primary);
+}
+
+.file-drop-zone-hint {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+/* Validation States */
+.is-valid {
+    border-color: var(--color-success) !important;
+}
+
+.is-valid:focus {
+    border-color: var(--color-success) !important;
+    box-shadow: 0 0 0 3px rgba(47, 133, 90, 0.25) !important;
+}
+
+.is-invalid {
+    border-color: var(--color-danger) !important;
+}
+
+.is-invalid:focus {
+    border-color: var(--color-danger) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
+}
+
+.valid-feedback,
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.valid-feedback {
+    color: var(--color-success);
+}
+
+.invalid-feedback {
+    color: var(--color-danger);
+}
+
+/* Responsive forms */
+@media (max-width: 576px) {
+    .form-container {
+        padding: 1rem;
+    }
+    
+    .form-input,
+    .form-select {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-file-label {
+        padding: 0.5rem 0.75rem;
+    }
+} 
