@@ -9,15 +9,24 @@
     <link rel="stylesheet" href="assets/css/modal.css">
     <link rel="stylesheet" href="assets/css/navigation.css">
     <link rel="stylesheet" href="assets/css/upload.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- App Header -->
+    <header class="app-header">
+        <h1>FindHer</h1>
+        <p>Upload your photo to search where it appears online</p>
+    </header>
+
     <!-- Main Content -->
     <div class="container">
         <!-- Upload Section -->
         <div class="upload-section">
             <div class="upload-box">
-                <div class="upload-icon">+</div>
+                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                 <div class="upload-text">Upload Photo</div>
+                <div class="upload-subtext">Click or drag & drop your image here</div>
+                <div class="drag-text">Maximum size: 5MB</div>
                 <input type="file" id="photoInput" accept="image/*" hidden>
             </div>
         </div>
@@ -25,6 +34,14 @@
         <!-- Preview Section (hidden by default) -->
         <div class="preview-section" style="display: none;">
             <img id="previewImage" src="" alt="Preview">
+            <div class="preview-controls">
+                <button class="preview-control-btn search-btn">
+                    <i class="fas fa-search"></i> Start Search
+                </button>
+                <button class="preview-control-btn reset-btn">
+                    <i class="fas fa-redo-alt"></i> Reset
+                </button>
+            </div>
         </div>
     </div>
 
@@ -37,27 +54,16 @@
             </div>
             <div class="modal-body">
                 <div class="tariff-option">
-                    <h3>Basic</h3>
-                    <p class="price">24 USDT</p>
+                    <h3>Standard</h3>
+                    <p class="price">8.99 USDT</p>
                     <p class="details">1 search</p>
                     <button class="select-tariff">Select Plan</button>
                 </div>
-                <div class="tariff-option">
-                    <h3>Standard</h3>
-                    <p class="price">34 USDT</p>
-                    <p class="details">2 searches</p>
-                    <button class="select-tariff">Select Plan</button>
-                </div>
-                <div class="tariff-option">
+                <div class="tariff-option best-value">
+                    <div class="best-value-badge">Best Value</div>
                     <h3>Premium</h3>
-                    <p class="price">50 USDT</p>
-                    <p class="details">4 searches</p>
-                    <button class="select-tariff">Select Plan</button>
-                </div>
-                <div class="tariff-option">
-                    <h3>Ultimate</h3>
-                    <p class="price">69 USDT</p>
-                    <p class="details">6 searches</p>
+                    <p class="price">24.99 USDT</p>
+                    <p class="details">5 searches</p>
                     <button class="select-tariff">Select Plan</button>
                 </div>
             </div>
@@ -67,15 +73,15 @@
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <button class="nav-item active" data-page="search">
-            <span class="nav-icon">🔍</span>
+            <span class="nav-icon"><i class="fas fa-search"></i></span>
             <span class="nav-text">Search</span>
         </button>
         <button class="nav-item" data-page="tariffs">
-            <span class="nav-icon">💎</span>
+            <span class="nav-icon"><i class="fas fa-gem"></i></span>
             <span class="nav-text">Tariffs</span>
         </button>
         <button class="nav-item" data-page="history">
-            <span class="nav-icon">📋</span>
+            <span class="nav-icon"><i class="fas fa-history"></i></span>
             <span class="nav-text">History</span>
         </button>
     </nav>

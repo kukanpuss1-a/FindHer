@@ -11,8 +11,8 @@ class TelegramHandler {
         this.webApp.expand();
 
         // Set color scheme
-        this.webApp.setHeaderColor('#000000');
-        this.webApp.setBackgroundColor('#000000');
+        this.webApp.setHeaderColor('#0F1923');
+        this.webApp.setBackgroundColor('#0F1923');
 
         // Enable closing confirmation
         this.webApp.enableClosingConfirmation();
@@ -27,10 +27,26 @@ class TelegramHandler {
             // Handle back button click
             if (document.querySelector('.modal.show')) {
                 this.closeModal();
+            } else if (document.querySelector('.preview-section').style.display !== 'none') {
+                // If preview is shown, go back to upload
+                document.querySelector('.preview-section').style.display = 'none';
+                document.querySelector('.upload-section').style.display = 'block';
+                document.querySelector('.upload-box').style.display = 'block';
             } else {
                 // Add your back navigation logic here
             }
         });
+
+        // Add theme change handling
+        this.webApp.onEvent('themeChanged', () => {
+            this.updateColorScheme();
+        });
+    }
+
+    updateColorScheme() {
+        // Adjust colors based on Telegram theme if needed
+        const colorScheme = this.webApp.colorScheme;
+        document.body.setAttribute('data-theme', colorScheme);
     }
 
     showModal() {
@@ -42,12 +58,24 @@ class TelegramHandler {
     closeModal() {
         const modal = document.getElementById('tariffModal');
         modal.classList.remove('show');
-        this.webApp.BackButton.hide();
+        
+        // If we're on the main upload screen, hide back button
+        if (document.querySelector('.preview-section').style.display === 'none') {
+            this.webApp.BackButton.hide();
+        }
     }
 
     sendData(data) {
         try {
-            this.webApp.sendData(JSON.stringify(data));
+            this.webApp.showPopup({
+                title: "Sending Data",
+                message: "Sending data to Telegram...",
+                buttons: [{type: "ok"}]
+            });
+            
+            setTimeout(() => {
+                this.webApp.sendData(JSON.stringify(data));
+            }, 1000);
             return true;
         } catch (error) {
             console.error('Error sending data to Telegram:', error);
@@ -56,13 +84,24 @@ class TelegramHandler {
     }
 
     showAlert(message) {
-        this.webApp.showAlert(message);
+        this.webApp.showPopup({
+            title: "Info",
+            message: message,
+            buttons: [{type: "ok"}]
+        });
     }
 
     showConfirm(message) {
         return new Promise((resolve) => {
-            this.webApp.showConfirm(message, (confirmed) => {
-                resolve(confirmed);
+            this.webApp.showPopup({
+                title: "Confirm",
+                message: message,
+                buttons: [
+                    {type: "cancel", text: "Cancel"},
+                    {type: "ok", text: "Confirm"}
+                ]
+            }, (buttonId) => {
+                resolve(buttonId === 'ok');
             });
         });
     }
@@ -75,6 +114,8 @@ class UploadHandler {
         this.photoInput = document.getElementById('photoInput');
         this.previewSection = document.querySelector('.preview-section');
         this.previewImage = document.getElementById('previewImage');
+        this.searchBtn = document.querySelector('.search-btn');
+        this.resetBtn = document.querySelector('.reset-btn');
         
         this.init();
     }
@@ -113,6 +154,80 @@ class UploadHandler {
                 this.handleFileSelect({ target: { files: files } });
             }
         });
+
+        // Reset button
+        if (this.resetBtn) {
+            this.resetBtn.addEventListener('click', () => {
+                this.resetUpload();
+            });
+        }
+
+        // Search button
+        if (this.searchBtn) {
+            this.searchBtn.addEventListener('click', () => {
+                this.startSearch();
+            });
+        }
+    }
+
+    resetUpload() {
+        this.photoInput.value = '';
+        this.previewSection.style.display = 'none';
+        this.uploadBox.style.display = 'block';
+        telegramHandler.webApp.BackButton.hide();
+    }
+
+    startSearch() {
+        // Show loading animation
+        this.addLoadingOverlay();
+        
+        // Check if user has an active plan
+        this.checkActivePlan().then(hasPlan => {
+            if (hasPlan) {
+                // Process the search
+                this.sendToTelegram();
+            } else {
+                // Remove loading and show tariff modal
+                this.removeLoadingOverlay();
+                telegramHandler.showAlert("Please select a plan to start searching");
+                modalHandler.showModal();
+            }
+        });
+    }
+
+    addLoadingOverlay() {
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        
+        const text = document.createElement('div');
+        text.className = 'loading-text';
+        text.textContent = 'Processing your image...';
+        
+        overlay.appendChild(spinner);
+        overlay.appendChild(text);
+        
+        this.previewSection.appendChild(overlay);
+    }
+
+    removeLoadingOverlay() {
+        const overlay = this.previewSection.querySelector('.loading-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+
+    checkActivePlan() {
+        // This would normally check with the backend
+        // For now, just simulate a check
+        return new Promise(resolve => {
+            // For demo purposes, randomly decide if user has a plan
+            setTimeout(() => {
+                resolve(false); // Set to false to always show the tariff modal for demo
+            }, 1000);
+        });
     }
 
     handleFileSelect(event) {
@@ -133,7 +248,7 @@ class UploadHandler {
         }
 
         this.showPreview(file);
-        this.sendToTelegram(file);
+        telegramHandler.webApp.BackButton.show();
     }
 
     showPreview(file) {
@@ -171,6 +286,10 @@ class UploadHandler {
 
     async sendToTelegram(file) {
         try {
+            if (!file) {
+                file = await this.getFileFromPreview();
+            }
+            
             this.uploadBox.classList.add('loading');
             
             // Convert file to base64
@@ -184,6 +303,12 @@ class UploadHandler {
                 size: file.size
             };
 
+            // Remove loading overlay
+            this.removeLoadingOverlay();
+
+            // Show success message
+            this.showSuccessMessage();
+
             const success = telegramHandler.sendData(data);
             
             if (!success) {
@@ -192,9 +317,42 @@ class UploadHandler {
         } catch (error) {
             console.error('Error processing photo:', error);
             this.showError('Error processing photo');
+            this.removeLoadingOverlay();
         } finally {
             this.uploadBox.classList.remove('loading');
         }
+    }
+
+    getFileFromPreview() {
+        return new Promise((resolve, reject) => {
+            try {
+                // Convert the preview image back to a File object
+                fetch(this.previewImage.src)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], "image.jpg", {
+                            type: "image/jpeg"
+                        });
+                        resolve(file);
+                    });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    showSuccessMessage() {
+        const successMsg = document.createElement('div');
+        successMsg.className = 'upload-success-message';
+        successMsg.innerHTML = '<i class="fas fa-check-circle"></i> Photo processed successfully!';
+        
+        // Add after preview image
+        this.previewSection.appendChild(successMsg);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            successMsg.remove();
+        }, 5000);
     }
 
     fileToBase64(file) {
@@ -263,20 +421,40 @@ class ModalHandler {
         );
 
         if (confirmed) {
-            // Send tariff selection to Telegram
-            const data = {
-                type: 'tariff_selection',
-                tariff: tariffName,
-                price: tariffPrice
-            };
+            // Show simulated processing
+            const button = this.modal.querySelector(`div.tariff-option:has(h3:contains('${tariffName}')) button.select-tariff`);
+            if (button) {
+                const originalText = button.textContent;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                button.disabled = true;
+                
+                setTimeout(() => {
+                    button.innerHTML = '<i class="fas fa-check"></i> Selected!';
+                    
+                    setTimeout(() => {
+                        // Send tariff selection to Telegram
+                        const data = {
+                            type: 'tariff_selection',
+                            tariff: tariffName,
+                            price: tariffPrice
+                        };
 
-            const success = telegramHandler.sendData(data);
+                        const success = telegramHandler.sendData(data);
 
-            if (success) {
-                telegramHandler.showAlert('Tariff selected successfully!');
-                this.closeModal();
-            } else {
-                telegramHandler.showAlert('Failed to process tariff selection. Please try again.');
+                        if (success) {
+                            telegramHandler.showAlert('Tariff selected successfully! You can now start searching.');
+                            this.closeModal();
+                            
+                            // Update button state
+                            button.innerHTML = originalText;
+                            button.disabled = false;
+                        } else {
+                            telegramHandler.showAlert('Failed to process tariff selection. Please try again.');
+                            button.innerHTML = originalText;
+                            button.disabled = false;
+                        }
+                    }, 1000);
+                }, 2000);
             }
         }
     }
@@ -337,9 +515,17 @@ class NavigationHandler {
             modalHandler.closeModal();
         }
 
-        // Show upload section
-        document.querySelector('.upload-section').style.display = 'block';
-        document.querySelector('.preview-section').style.display = 'none';
+        // If preview is not showing, show upload section
+        const previewSection = document.querySelector('.preview-section');
+        const uploadSection = document.querySelector('.upload-section');
+        const uploadBox = document.querySelector('.upload-box');
+        
+        if (previewSection.style.display !== 'block') {
+            uploadSection.style.display = 'block';
+            uploadBox.style.display = 'block';
+            previewSection.style.display = 'none';
+            telegramHandler.webApp.BackButton.hide();
+        }
     }
 
     showTariffsPage() {
@@ -430,8 +616,8 @@ class ValidationUtils {
     }
 
     static validateTariffSelection(tariffName, tariffPrice) {
-        const validTariffs = ['Basic', 'Standard', 'Premium', 'Ultimate'];
-        const validPrices = ['24 USDT', '34 USDT', '50 USDT', '69 USDT'];
+        const validTariffs = ['Standard', 'Premium'];
+        const validPrices = ['8.99 USDT', '24.99 USDT'];
 
         if (!validTariffs.includes(tariffName)) {
             return {
@@ -563,6 +749,18 @@ let telegramHandler;
 let uploadHandler;
 let modalHandler;
 let navigationHandler;
+
+// Add CSS selector support for jQuery-like syntax
+if (!HTMLElement.prototype.querySelectorAll) {
+    Element.prototype.querySelectorAll = function(selector) {
+        return document.querySelectorAll(selector);
+    }
+}
+
+// Add contains selector for easier element selection
+HTMLElement.prototype.contains = function(text) {
+    return this.textContent.includes(text);
+};
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
