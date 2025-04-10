@@ -11,8 +11,8 @@ class TelegramHandler {
         this.webApp.expand();
 
         // Set color scheme
-        this.webApp.setHeaderColor('#000000');
-        this.webApp.setBackgroundColor('#000000');
+        this.webApp.setHeaderColor('#121212');
+        this.webApp.setBackgroundColor('#121212');
 
         // Enable closing confirmation
         this.webApp.enableClosingConfirmation();
@@ -27,10 +27,33 @@ class TelegramHandler {
             // Handle back button click
             if (document.querySelector('.modal.show')) {
                 this.closeModal();
+            } else if (document.querySelector('.preview-section').style.display !== 'none') {
+                this.handleBackFromPreview();
             } else {
                 // Add your back navigation logic here
             }
         });
+
+        // Handle theme changes
+        this.webApp.onEvent('themeChanged', () => {
+            this.applyColorScheme();
+        });
+    }
+
+    handleBackFromPreview() {
+        document.querySelector('.preview-section').style.display = 'none';
+        document.querySelector('.upload-box').style.display = 'block';
+    }
+
+    applyColorScheme() {
+        const colorScheme = this.webApp.colorScheme;
+        if (colorScheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            document.body.classList.remove('light-theme');
+        } else {
+            document.body.classList.add('light-theme');
+            document.body.classList.remove('dark-theme');
+        }
     }
 
     showModal() {
@@ -42,7 +65,11 @@ class TelegramHandler {
     closeModal() {
         const modal = document.getElementById('tariffModal');
         modal.classList.remove('show');
-        this.webApp.BackButton.hide();
+        
+        // Only hide back button if preview section is not shown
+        if (document.querySelector('.preview-section').style.display === 'none') {
+            this.webApp.BackButton.hide();
+        }
     }
 
     sendData(data) {
@@ -66,6 +93,18 @@ class TelegramHandler {
             });
         });
     }
+
+    showLoadingIndicator() {
+        this.webApp.showPopup({
+            title: 'Processing',
+            message: 'Please wait while we process your request...',
+            buttons: []
+        });
+    }
+
+    closeLoadingIndicator() {
+        this.webApp.closePopup();
+    }
 }
 
 // Upload Handler
@@ -75,6 +114,9 @@ class UploadHandler {
         this.photoInput = document.getElementById('photoInput');
         this.previewSection = document.querySelector('.preview-section');
         this.previewImage = document.getElementById('previewImage');
+        this.fileTypeBadge = document.querySelector('.file-type-badge');
+        this.searchButton = document.querySelector('.btn-search');
+        this.cancelButton = document.querySelector('.btn-cancel');
         
         this.init();
     }
@@ -98,61 +140,88 @@ class UploadHandler {
         this.uploadBox.addEventListener('dragover', (event) => {
             event.preventDefault();
             this.uploadBox.classList.add('dragover');
+            this.uploadBox.querySelector('.upload-icon').classList.add('dragover');
         });
 
         this.uploadBox.addEventListener('dragleave', () => {
             this.uploadBox.classList.remove('dragover');
+            this.uploadBox.querySelector('.upload-icon').classList.remove('dragover');
         });
 
         this.uploadBox.addEventListener('drop', (event) => {
             event.preventDefault();
             this.uploadBox.classList.remove('dragover');
+            this.uploadBox.querySelector('.upload-icon').classList.remove('dragover');
             
             const files = event.dataTransfer.files;
             if (files.length > 0) {
                 this.handleFileSelect({ target: { files: files } });
             }
         });
+
+        // Handle search button click
+        this.searchButton?.addEventListener('click', () => {
+            this.sendToTelegram();
+        });
+
+        // Handle cancel button click
+        this.cancelButton?.addEventListener('click', () => {
+            this.resetUpload();
+        });
     }
 
-    handleFileSelect(event) {
+    async handleFileSelect(event) {
         const file = event.target.files[0];
         
         if (!file) return;
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            this.showError('Please select an image file');
+        // Validate file
+        const validation = await ValidationUtils.validateImage(file);
+        if (!validation.isValid) {
+            this.showError(validation.error);
             return;
         }
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            this.showError('File size should be less than 5MB');
-            return;
-        }
-
+        this.uploadFile = file;
         this.showPreview(file);
-        this.sendToTelegram(file);
+        
+        // Show back button
+        telegramHandler.webApp.BackButton.show();
     }
 
     showPreview(file) {
         const reader = new FileReader();
         
+        // Add loading state to upload box
+        this.uploadBox.classList.add('loading');
+        
+        // Show file extension in badge
+        const fileExt = file.name.split('.').pop().toUpperCase();
+        this.fileTypeBadge.textContent = fileExt;
+        
         reader.onload = (e) => {
             this.previewImage.src = e.target.result;
             this.previewSection.style.display = 'block';
             this.uploadBox.style.display = 'none';
+            this.uploadBox.classList.remove('loading');
         };
 
         reader.readAsDataURL(file);
     }
 
+    resetUpload() {
+        this.previewSection.style.display = 'none';
+        this.uploadBox.style.display = 'block';
+        this.previewImage.src = '';
+        this.photoInput.value = '';
+        this.uploadFile = null;
+        
+        // Hide back button
+        telegramHandler.webApp.BackButton.hide();
+    }
+
     showError(message) {
         this.uploadBox.classList.add('error');
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'error-message';
-        errorMessage.textContent = message;
         
         // Remove existing error message if any
         const existingError = this.uploadBox.querySelector('.error-message');
@@ -160,6 +229,9 @@ class UploadHandler {
             existingError.remove();
         }
         
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent = message;
         this.uploadBox.appendChild(errorMessage);
         
         // Remove error state after 3 seconds
@@ -169,31 +241,72 @@ class UploadHandler {
         }, 3000);
     }
 
-    async sendToTelegram(file) {
+    async sendToTelegram() {
+        if (!this.uploadFile) {
+            this.showError('No file selected');
+            return;
+        }
+
         try {
-            this.uploadBox.classList.add('loading');
+            // Add loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            
+            const spinner = document.createElement('div');
+            spinner.className = 'loading-spinner';
+            
+            const loadingText = document.createElement('div');
+            loadingText.className = 'loading-text';
+            loadingText.textContent = 'Processing...';
+            
+            loadingOverlay.appendChild(spinner);
+            loadingOverlay.appendChild(loadingText);
+            
+            this.previewSection.querySelector('.preview-container').appendChild(loadingOverlay);
+            
+            // Disable search button
+            this.searchButton.disabled = true;
+            
+            // Compress image if it's too large
+            let fileToSend = this.uploadFile;
+            if (this.uploadFile.size > 1024 * 1024) { // If larger than 1MB
+                fileToSend = await HelperUtils.compressImage(this.uploadFile);
+            }
             
             // Convert file to base64
-            const base64 = await this.fileToBase64(file);
+            const base64 = await this.fileToBase64(fileToSend);
             
             // Send data to Telegram
             const data = {
                 type: 'photo_upload',
                 photo: base64,
-                filename: file.name,
-                size: file.size
+                filename: fileToSend.name,
+                size: fileToSend.size,
+                originalSize: this.uploadFile.size,
+                timestamp: Date.now()
             };
 
             const success = telegramHandler.sendData(data);
             
-            if (!success) {
-                this.showError('Failed to send photo to Telegram');
-            }
+            // Remove loading overlay
+            setTimeout(() => {
+                loadingOverlay.remove();
+                this.searchButton.disabled = false;
+                
+                if (success) {
+                    // Show success message or navigate to result page
+                    telegramHandler.showAlert('Photo uploaded successfully! Search results will be available soon.');
+                    // Reset upload for next image
+                    this.resetUpload();
+                } else {
+                    this.showError('Failed to send photo to Telegram');
+                }
+            }, 1500); // Slight delay for better UX
+            
         } catch (error) {
             console.error('Error processing photo:', error);
             this.showError('Error processing photo');
-        } finally {
-            this.uploadBox.classList.remove('loading');
+            this.searchButton.disabled = false;
         }
     }
 
@@ -219,8 +332,10 @@ class ModalHandler {
 
     init() {
         this.setupEventListeners();
-        // Show modal on page load
-        this.showModal();
+        // Show modal on page load after a short delay
+        setTimeout(() => {
+            this.showModal();
+        }, 800);
     }
 
     setupEventListeners() {
@@ -258,26 +373,40 @@ class ModalHandler {
     }
 
     async handleTariffSelection(tariffName, tariffPrice) {
+        // Validate tariff selection
+        const validation = ValidationUtils.validateTariffSelection(tariffName, tariffPrice);
+        if (!validation.isValid) {
+            telegramHandler.showAlert(validation.error);
+            return;
+        }
+        
         const confirmed = await telegramHandler.showConfirm(
             `Are you sure you want to select the ${tariffName} plan for ${tariffPrice}?`
         );
 
         if (confirmed) {
-            // Send tariff selection to Telegram
-            const data = {
-                type: 'tariff_selection',
-                tariff: tariffName,
-                price: tariffPrice
-            };
+            // Show loading indicator
+            telegramHandler.showLoadingIndicator();
+            
+            setTimeout(() => {
+                // Simulate API request
+                const data = {
+                    type: 'tariff_selection',
+                    tariff: tariffName,
+                    price: tariffPrice,
+                    timestamp: Date.now()
+                };
 
-            const success = telegramHandler.sendData(data);
+                const success = telegramHandler.sendData(data);
+                telegramHandler.closeLoadingIndicator();
 
-            if (success) {
-                telegramHandler.showAlert('Tariff selected successfully!');
-                this.closeModal();
-            } else {
-                telegramHandler.showAlert('Failed to process tariff selection. Please try again.');
-            }
+                if (success) {
+                    telegramHandler.showAlert('Tariff selected successfully!');
+                    this.closeModal();
+                } else {
+                    telegramHandler.showAlert('Failed to process tariff selection. Please try again.');
+                }
+            }, 1000);
         }
     }
 }
@@ -305,6 +434,9 @@ class NavigationHandler {
     }
 
     navigateToPage(page) {
+        // Skip if already on the page
+        if (this.currentPage === page) return;
+        
         // Remove active class from all items
         this.navItems.forEach(item => {
             item.classList.remove('active');
@@ -339,7 +471,11 @@ class NavigationHandler {
 
         // Show upload section
         document.querySelector('.upload-section').style.display = 'block';
-        document.querySelector('.preview-section').style.display = 'none';
+        
+        // Only hide preview if needed
+        if (uploadHandler.uploadFile === null) {
+            document.querySelector('.preview-section').style.display = 'none';
+        }
     }
 
     showTariffsPage() {
@@ -358,9 +494,93 @@ class NavigationHandler {
         document.querySelector('.upload-section').style.display = 'none';
         document.querySelector('.preview-section').style.display = 'none';
 
-        // Show history section (to be implemented)
-        // For now, just show a message
-        telegramHandler.showAlert('History feature coming soon!');
+        // Load history data
+        this.loadHistoryData();
+    }
+    
+    async loadHistoryData() {
+        try {
+            // Show loading spinner
+            const container = document.querySelector('.container');
+            const existingHistory = container.querySelector('.history-section');
+            
+            if (existingHistory) {
+                existingHistory.remove();
+            }
+            
+            const loadingSpinner = document.createElement('div');
+            loadingSpinner.className = 'spinner';
+            container.appendChild(loadingSpinner);
+            
+            // Fetch history data
+            // For now, simulating with a delay
+            setTimeout(async () => {
+                try {
+                    const response = await fetch('assets/js/history.json');
+                    const data = await response.json();
+                    
+                    // Remove spinner
+                    loadingSpinner.remove();
+                    
+                    // Display history
+                    this.displayHistory(data.history);
+                } catch (error) {
+                    console.error('Error loading history:', error);
+                    loadingSpinner.remove();
+                    telegramHandler.showAlert('Failed to load history data');
+                }
+            }, 800);
+            
+        } catch (error) {
+            console.error('Error in loadHistoryData:', error);
+            telegramHandler.showAlert('An error occurred while loading history');
+        }
+    }
+    
+    displayHistory(historyData) {
+        const container = document.querySelector('.container');
+        
+        // Create history section
+        const historySection = document.createElement('div');
+        historySection.className = 'history-section fade-in';
+        
+        // Add title
+        const title = document.createElement('h2');
+        title.className = 'section-title';
+        title.textContent = 'Search History';
+        historySection.appendChild(title);
+        
+        if (historyData.length === 0) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.className = 'text-center';
+            emptyMessage.textContent = 'No search history yet';
+            historySection.appendChild(emptyMessage);
+        } else {
+            // Create history items
+            historyData.forEach(item => {
+                const historyCard = document.createElement('div');
+                historyCard.className = 'card mb-2';
+                
+                const cardContent = `
+                    <div class="history-item">
+                        <div class="history-item-image">
+                            <img src="${item.image}" alt="Search">
+                        </div>
+                        <div class="history-item-details">
+                            <div class="history-item-date">${HelperUtils.formatDate(new Date(item.date))}</div>
+                            <div class="history-item-results">
+                                <strong>Found on:</strong> ${item.results.map(r => r.platform).join(', ')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                historyCard.innerHTML = cardContent;
+                historySection.appendChild(historyCard);
+            });
+        }
+        
+        container.appendChild(historySection);
     }
 }
 
@@ -430,8 +650,8 @@ class ValidationUtils {
     }
 
     static validateTariffSelection(tariffName, tariffPrice) {
-        const validTariffs = ['Basic', 'Standard', 'Premium', 'Ultimate'];
-        const validPrices = ['24 USDT', '34 USDT', '50 USDT', '69 USDT'];
+        const validTariffs = ['Standard', 'Premium'];
+        const validPrices = ['8.99 USDT', '24.99 USDT'];
 
         if (!validTariffs.includes(tariffName)) {
             return {
@@ -556,6 +776,12 @@ class HelperUtils {
             img.src = URL.createObjectURL(file);
         });
     }
+    
+    static addHistoryItem(data) {
+        // This would typically send data to the server
+        // For now, just logging
+        console.log('Adding history item:', data);
+    }
 }
 
 // Initialize handlers
@@ -566,10 +792,15 @@ let navigationHandler;
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Hide loading screen after 1 second
+    setTimeout(() => {
+        document.querySelector('.loading-screen')?.classList.add('hidden');
+    }, 1000);
+    
     // Check if running in Telegram WebApp
     if (!window.Telegram?.WebApp) {
         console.error('Telegram WebApp is not available');
-        document.body.innerHTML = '<div class="error">This app must be opened in Telegram</div>';
+        document.body.innerHTML = '<div style="color:white;text-align:center;padding:20px;">This app must be opened in Telegram</div>';
         return;
     }
 
@@ -582,14 +813,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle errors
     window.onerror = function(message, source, lineno, colno, error) {
         console.error('Global error:', { message, source, lineno, colno, error });
-        telegramHandler.showAlert('An error occurred. Please try again.');
+        telegramHandler?.showAlert('An error occurred. Please try again.');
         return false;
     };
 
     // Handle unhandled promise rejections
     window.onunhandledrejection = function(event) {
         console.error('Unhandled promise rejection:', event.reason);
-        telegramHandler.showAlert('An error occurred. Please try again.');
+        telegramHandler?.showAlert('An error occurred. Please try again.');
     };
 
     // Add loading state to body
