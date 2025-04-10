@@ -1,161 +1,326 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FindHer - Поиск по фото</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <title>FindHer - Image Search</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/modal.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/navigation.css">
+    <link rel="stylesheet" href="assets/css/upload.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-container">
-        <header class="app-header">
-            <div class="logo">
-                <h1>FindHer</h1>
-                <span class="tagline">Поиск изображений по фото</span>
+    <!-- App Header -->
+    <header class="app-header">
+        <h1>FindHer</h1>
+        <p>Upload your photo to search where it appears online</p>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="upload-box">
+                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                <div class="upload-text">Upload Photo</div>
+                <div class="upload-subtext">Click or drag & drop your image here</div>
+                <div class="drag-text">Maximum size: 5MB</div>
+                <input type="file" id="photoInput" accept="image/*" hidden>
             </div>
-            <nav class="app-nav">
-                <a href="#" class="view-history-btn">История поиска</a>
-            </nav>
-        </header>
+        </div>
 
-        <main class="app-content">
-            <div class="content-area">
-                <!-- Upload Section -->
-                <section id="uploadSection" class="upload-section">
-                    <h2>Загрузите изображение для поиска</h2>
-                    <div class="upload-container">
-                        <div id="previewContainer" class="file-preview-container">
-                            <img id="filePreview" src="" alt="Предпросмотр" style="display: none;">
-                            <div class="upload-icon">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
-                            <div class="file-details">
-                                <span id="fileName">Файл не выбран</span>
-                            </div>
-                        </div>
-                        <div class="upload-actions">
-                            <button id="uploadBtn" class="btn upload-btn">
-                                <i class="fas fa-upload"></i> Выбрать файл
-                            </button>
-                            <input type="file" id="fileUpload" accept="image/*" style="display: none;">
-                            <button id="clearBtn" class="btn clear-btn" style="display: none;">
-                                <i class="fas fa-times"></i> Очистить
-                            </button>
-                        </div>
-                    </div>
-                    <div class="search-action">
-                        <button id="startSearch" class="btn search-btn" disabled>
-                            <i class="fas fa-search"></i> Начать поиск
-                        </button>
-                    </div>
-                </section>
-
-                <!-- History Section -->
-                <section id="historySection" class="history-section" style="display: none;">
-                    <div class="history-header">
-                        <h2>История поиска</h2>
-                        <button id="backToUpload" class="btn">
-                            <i class="fas fa-arrow-left"></i> Назад
-                        </button>
-                    </div>
-                    <div id="historyContainer" class="search-results-list">
-                        <!-- Results will be added dynamically -->
-                    </div>
-                </section>
+        <!-- Preview Section (hidden by default) -->
+        <div class="preview-section" style="display: none;">
+            <img id="previewImage" src="" alt="Preview">
+            <div class="preview-controls">
+                <button class="preview-control-btn search-btn">
+                    <i class="fas fa-search"></i> Start Search
+                </button>
+                <button class="preview-control-btn reset-btn">
+                    <i class="fas fa-redo-alt"></i> Reset
+                </button>
             </div>
+        </div>
 
-            <!-- Platforms Selection Modal -->
-            <div id="platformsModal" class="modal">
-                <div class="modal-content platforms-modal">
-                    <div class="modal-header">
-                        <h3>Выберите платформу для поиска</h3>
-                        <button class="close-modal">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="modal-description">
-                            Выберите платформу, на которой хотите найти изображение
-                        </p>
-                        <div class="platform-options">
-                            <div class="platform-option" data-platform="OnlyFans">
-                                <div class="platform-icon">
-                                    <i class="fab fa-think-peaks"></i>
-                                </div>
-                                <div class="platform-name">OnlyFans</div>
-                            </div>
-                            <div class="platform-option" data-platform="FanVue">
-                                <div class="platform-icon">
-                                    <i class="fab fa-product-hunt"></i>
-                                </div>
-                                <div class="platform-name">FanVue</div>
-                            </div>
-                        </div>
-                        <div class="platform-info">
-                            <p>Тариф по умолчанию: <span>Базовый (30 кредитов)</span></p>
-                        </div>
-                        <div class="modal-actions">
-                            <button id="startPlatformSearch" class="btn btn-primary" disabled>
-                                Начать поиск
-                            </button>
-                        </div>
-                    </div>
+        <!-- Platform Selection (hidden by default) -->
+        <div class="platform-selection" style="display: none;">
+            <h3 class="text-center mb-2">Select Platforms to Search</h3>
+            
+            <!-- Platform options -->
+            <div class="platform-option selected" data-platform="onlyfans">
+                <div class="platform-checkbox"></div>
+                <div class="platform-info">
+                    <div class="platform-name">OnlyFans</div>
+                    <div class="platform-status active">Available</div>
                 </div>
             </div>
-
-            <!-- Search Progress Modal -->
-            <div id="searchProgressModal" class="modal">
-                <div class="modal-content progress-modal">
-                    <div class="modal-header">
-                        <h3>Выполняется поиск</h3>
-                    </div>
-                    <div class="modal-body">
-                        <div class="progress-animation">
-                            <div class="search-loader"></div>
-                        </div>
-                        <div class="progress-container">
-                            <div class="progress-track">
-                                <div class="progress-fill"></div>
-                            </div>
-                            <div class="progress-info">
-                                <span class="search-status">Поиск изображения...</span>
-                                <span class="search-progress">0%</span>
-                            </div>
-                        </div>
-                    </div>
+            
+            <div class="platform-option" data-platform="bongacams">
+                <div class="platform-checkbox"></div>
+                <div class="platform-info">
+                    <div class="platform-name">BongaCams</div>
+                    <div class="platform-status coming-soon">Coming soon</div>
                 </div>
             </div>
-
-            <!-- Search Results Modal -->
-            <div id="searchResultsModal" class="modal">
-                <div class="modal-content results-modal">
-                    <div class="modal-header">
-                        <h3>Результат поиска</h3>
-                        <button class="close-modal">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="search-summary">
-                            <!-- Will be populated dynamically -->
-                        </div>
-                        <div class="modal-actions">
-                            <button id="viewResults" class="btn btn-primary">
-                                Смотреть историю
-                            </button>
-                        </div>
-                    </div>
+            
+            <div class="platform-option" data-platform="hornygoat">
+                <div class="platform-checkbox"></div>
+                <div class="platform-info">
+                    <div class="platform-name">HornyGoat</div>
+                    <div class="platform-status coming-soon">Coming soon</div>
                 </div>
             </div>
-        </main>
+            
+            <div class="platform-controls">
+                <button class="btn search-platforms-btn">
+                    <i class="fas fa-search"></i> Search Selected
+                </button>
+            </div>
+        </div>
 
-        <footer class="app-footer">
-            <p>© 2023 FindHer. Все права защищены.</p>
-        </footer>
+        <!-- Search Progress (hidden by default) -->
+        <div class="search-progress" style="display: none;">
+            <div class="card">
+                <h3 class="text-center mb-2">Searching...</h3>
+                <div class="loading-indicator"></div>
+                <div class="progress-text text-center">
+                    Scanning platforms for your image...
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section (hidden by default) -->
+        <div class="history-section" style="display: none;">
+            <h3 class="text-center mb-2">Search History</h3>
+            
+            <div id="historyContainer">
+                <!-- History items will be added here dynamically -->
+                <div class="empty-history">
+                    <i class="fas fa-history"></i>
+                    <p>Your search history will appear here</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="assets/js/app.js"></script>
+    <!-- Modal for Tariffs -->
+    <div class="modal" id="tariffModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choose Your Plan</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tariff-option">
+                    <h3>Standard</h3>
+                    <p class="price">24 USDT</p>
+                    <p class="details">1 search</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+                <div class="tariff-option">
+                    <h3>Plus</h3>
+                    <p class="price">34 USDT</p>
+                    <p class="details">2 searches</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+                <div class="tariff-option best-value">
+                    <div class="best-value-badge">Best Value</div>
+                    <h3>Premium</h3>
+                    <p class="price">50 USDT</p>
+                    <p class="details">4 searches</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+                <div class="tariff-option">
+                    <h3>Pro</h3>
+                    <p class="price">69 USDT</p>
+                    <p class="details">6 searches</p>
+                    <button class="select-tariff">Select Plan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-page="search">
+            <span class="nav-icon"><i class="fas fa-search"></i></span>
+            <span class="nav-text">Search</span>
+        </button>
+        <button class="nav-item" data-page="tariffs">
+            <span class="nav-icon"><i class="fas fa-gem"></i></span>
+            <span class="nav-text">Tariffs</span>
+        </button>
+        <button class="nav-item" data-page="history">
+            <span class="nav-icon"><i class="fas fa-history"></i></span>
+            <span class="nav-text">History</span>
+        </button>
+    </nav>
+
+    <!-- Tariff Section -->
+    <section id="tariff-section" class="tariff-section">
+        <div class="tariff-header">
+            <h2 class="tariff-title">Choose Your Plan</h2>
+            <p class="tariff-subtitle">Select the plan that fits your needs</p>
+        </div>
+        <div class="tariff-grid">
+            <div class="tariff-card" data-plan="standard" data-tariff-id="standard">
+                <div class="tariff-name">Standard</div>
+                <div class="tariff-price">24 USDT</div>
+                <ul class="tariff-features">
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>1 search</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>Basic search filters</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>Email support</span>
+                    </li>
+                </ul>
+                <button class="tariff-buy-btn" data-tariff-id="standard">Choose Plan</button>
+            </div>
+            <div class="tariff-card" data-plan="plus" data-tariff-id="plus">
+                <div class="tariff-name">Plus</div>
+                <div class="tariff-price">34 USDT</div>
+                <ul class="tariff-features">
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>2 searches</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>Advanced search filters</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>Priority support</span>
+                    </li>
+                </ul>
+                <button class="tariff-buy-btn" data-tariff-id="plus">Choose Plan</button>
+            </div>
+            <div class="tariff-card" data-plan="premium" data-tariff-id="premium">
+                <div class="tariff-badge">Popular</div>
+                <div class="tariff-name">Premium</div>
+                <div class="tariff-price">50 USDT</div>
+                <ul class="tariff-features">
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>4 searches</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>All search filters</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>Priority support</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>Detailed reports</span>
+                    </li>
+                </ul>
+                <button class="tariff-buy-btn" data-tariff-id="premium">Choose Plan</button>
+            </div>
+            <div class="tariff-card" data-plan="pro" data-tariff-id="pro">
+                <div class="tariff-name">Pro</div>
+                <div class="tariff-price">69 USDT</div>
+                <ul class="tariff-features">
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>6 searches</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>All search filters</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>Priority support</span>
+                    </li>
+                    <li class="tariff-feature-item">
+                        <i class="fa fa-check tariff-feature-icon"></i>
+                        <span>24/7 VIP support</span>
+                    </li>
+                </ul>
+                <button class="tariff-buy-btn" data-tariff-id="pro">Choose Plan</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Section -->
+    <section id="payment-section" class="payment-section" style="display: none;">
+        <div class="payment-header">
+            <h2 class="payment-title">Payment Details</h2>
+            <p class="payment-subtitle">Choose your preferred payment method</p>
+        </div>
+        
+        <div class="payment-methods">
+            <div class="payment-method-item" data-method="credit-card">
+                <img src="assets/images/credit-card.png" alt="Credit Card" class="payment-method-icon">
+                <div class="payment-method-name">Credit Card</div>
+            </div>
+            <div class="payment-method-item" data-method="paypal">
+                <img src="assets/images/paypal.png" alt="PayPal" class="payment-method-icon">
+                <div class="payment-method-name">PayPal</div>
+            </div>
+            <div class="payment-method-item" data-method="apple-pay">
+                <img src="assets/images/apple-pay.png" alt="Apple Pay" class="payment-method-icon">
+                <div class="payment-method-name">Apple Pay</div>
+            </div>
+            <div class="payment-method-item" data-method="google-pay">
+                <img src="assets/images/google-pay.png" alt="Google Pay" class="payment-method-icon">
+                <div class="payment-method-name">Google Pay</div>
+            </div>
+        </div>
+        
+        <div class="payment-summary">
+            <h3 class="payment-summary-title">Order Summary</h3>
+            <div class="payment-summary-item">
+                <span class="payment-summary-label">Plan:</span>
+                <span class="payment-summary-value" id="payment-plan-name">-</span>
+            </div>
+            <div class="payment-summary-item">
+                <span class="payment-summary-label">Searches:</span>
+                <span class="payment-summary-value" id="payment-searches">-</span>
+            </div>
+            <div class="payment-total">
+                <span>Total:</span>
+                <span id="payment-total-amount">-</span>
+            </div>
+        </div>
+        
+        <button id="process-payment-btn" class="payment-button" disabled>Complete Payment</button>
+        <a id="payment-back-btn" class="payment-back-btn">Back to Plans</a>
+        
+        <!-- Payment Success -->
+        <div id="payment-success" class="payment-success" style="display: none;">
+            <div class="payment-success-icon">
+                <i class="fa fa-check-circle fa-4x"></i>
+            </div>
+            <h3 class="payment-success-title">Payment Successful!</h3>
+            <p class="payment-success-text">Thank you for your purchase. Your plan has been activated.</p>
+            <button id="back-to-search-btn" class="back-to-search-btn">Back to Search</button>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="assets/js/bundle.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script>
+        // Initialize Telegram WebApp
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.expand();
+                window.Telegram.WebApp.ready();
+            }
+        });
+    </script>
 </body>
 </html> 

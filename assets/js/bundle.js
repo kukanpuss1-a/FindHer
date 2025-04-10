@@ -116,6 +116,7 @@ class UploadHandler {
         this.previewImage = document.getElementById('previewImage');
         this.searchBtn = document.querySelector('.search-btn');
         this.resetBtn = document.querySelector('.reset-btn');
+        this.platformSelection = document.querySelector('.platform-selection');
         
         this.init();
     }
@@ -184,8 +185,11 @@ class UploadHandler {
         // Check if user has an active plan
         this.checkActivePlan().then(hasPlan => {
             if (hasPlan) {
-                // Process the search
-                this.sendToTelegram();
+                // Show platform selection
+                this.removeLoadingOverlay();
+                this.previewSection.style.display = 'none';
+                this.platformSelection.style.display = 'block';
+                platformHandler.init();
             } else {
                 // Remove loading and show tariff modal
                 this.removeLoadingOverlay();
@@ -220,13 +224,18 @@ class UploadHandler {
     }
 
     checkActivePlan() {
-        // This would normally check with the backend
-        // For now, just simulate a check
-        return new Promise(resolve => {
-            // For demo purposes, randomly decide if user has a plan
+        return new Promise((resolve) => {
+            // In a real app, this would check with a server
+            // For now, simulate the check with 50% chance of having a plan
+            
+            // Check if we have a stored plan in localStorage
+            const storedPlan = localStorage.getItem('selectedPlan');
+            const hasPlan = storedPlan ? true : false;
+            
+            // Simulate some processing time
             setTimeout(() => {
-                resolve(false); // Set to false to always show the tariff modal for demo
-            }, 1000);
+                resolve(hasPlan);
+            }, 800);
         });
     }
 
@@ -362,6 +371,229 @@ class UploadHandler {
             reader.onload = () => resolve(reader.result);
             reader.onerror = error => reject(error);
         });
+    }
+}
+
+// Platform Handler
+class PlatformHandler {
+    constructor() {
+        this.platformOptions = document.querySelectorAll('.platform-option');
+        this.searchButton = document.querySelector('.search-platforms-btn');
+        this.platformSelection = document.querySelector('.platform-selection');
+        this.searchProgress = document.querySelector('.search-progress');
+        this.previewSection = document.querySelector('.preview-section');
+        this.historySection = document.querySelector('.history-section');
+    }
+
+    init() {
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Handle platform selection
+        this.platformOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Skip if coming soon
+                if (option.querySelector('.platform-status.coming-soon')) {
+                    telegramHandler.showAlert("This platform is coming soon. Please try OnlyFans for now.");
+                    return;
+                }
+                
+                // Toggle selected state (only for available platforms)
+                if (!option.querySelector('.platform-status.coming-soon')) {
+                    option.classList.toggle('selected');
+                }
+            });
+        });
+
+        // Handle search button
+        this.searchButton.addEventListener('click', () => {
+            this.startSearch();
+        });
+    }
+
+    startSearch() {
+        // Check if at least one platform is selected
+        const selectedPlatforms = document.querySelectorAll('.platform-option.selected');
+        if (selectedPlatforms.length === 0) {
+            telegramHandler.showAlert("Please select at least one platform to search.");
+            return;
+        }
+
+        // Hide platform selection, show search progress
+        this.platformSelection.style.display = 'none';
+        this.searchProgress.style.display = 'block';
+
+        // Get the platforms that were selected
+        const platforms = Array.from(selectedPlatforms).map(platform => {
+            return {
+                name: platform.querySelector('.platform-name').textContent,
+                id: platform.dataset.platform
+            };
+        });
+
+        // Simulate search process
+        this.simulateSearchProcess(platforms);
+    }
+
+    simulateSearchProcess(platforms) {
+        // Get the image from preview
+        const imageUrl = document.getElementById('previewImage').src;
+        
+        // Update progress text
+        const progressText = document.querySelector('.progress-text');
+        let platformIndex = 0;
+        
+        // Update progress text periodically
+        const updateInterval = setInterval(() => {
+            if (platformIndex < platforms.length) {
+                progressText.textContent = `Scanning ${platforms[platformIndex].name}...`;
+                platformIndex++;
+            } else {
+                clearInterval(updateInterval);
+            }
+        }, 2000);
+        
+        // Simulate search completion after 6 seconds
+        setTimeout(() => {
+            clearInterval(updateInterval);
+            this.completeSearch(platforms, imageUrl);
+        }, 6000);
+    }
+
+    completeSearch(platforms, imageUrl) {
+        // Hide search progress
+        this.searchProgress.style.display = 'none';
+        
+        // Generate random results
+        const results = this.generateSearchResults(platforms);
+        
+        // Add to history
+        this.addToHistory(imageUrl, results);
+        
+        // Show history section
+        this.historySection.style.display = 'block';
+        
+        // Update navigation to history
+        document.querySelector('.nav-item[data-page="history"]').click();
+    }
+
+    generateSearchResults(platforms) {
+        const results = [];
+        
+        platforms.forEach(platform => {
+            // Generate random results (with higher chance of finding something on OnlyFans)
+            const foundCount = platform.id === 'onlyfans' ? 
+                Math.floor(Math.random() * 3) + 1 : // 1-3 results for OnlyFans
+                Math.floor(Math.random() * 2);      // 0-1 results for others
+            
+            if (foundCount > 0) {
+                results.push({
+                    platform: platform.name,
+                    count: foundCount,
+                    date: new Date(),
+                    links: this.generateFakeLinks(platform.name, foundCount)
+                });
+            }
+        });
+        
+        return results;
+    }
+
+    generateFakeLinks(platform, count) {
+        const links = [];
+        const usernames = ['sophia_hot', 'emma_sexy', 'mia_love', 'lisa_dreams', 'amanda_joy'];
+        
+        for (let i = 0; i < count; i++) {
+            const randomUsername = usernames[Math.floor(Math.random() * usernames.length)];
+            links.push({
+                username: randomUsername,
+                url: `https://${platform.toLowerCase().replace(/\s+/g, '')}.com/${randomUsername}`,
+                confidence: Math.floor(Math.random() * 20) + 80 // 80-99% confidence
+            });
+        }
+        
+        return links;
+    }
+
+    addToHistory(imageUrl, results) {
+        const historyContainer = document.getElementById('historyContainer');
+        
+        // Remove empty history message if it exists
+        const emptyHistory = historyContainer.querySelector('.empty-history');
+        if (emptyHistory) {
+            emptyHistory.remove();
+        }
+        
+        // Create history item
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        
+        // Add timestamp
+        const timestamp = document.createElement('div');
+        timestamp.className = 'history-timestamp';
+        timestamp.textContent = HelperUtils.formatDate(new Date());
+        
+        // Add image thumbnail
+        const thumbnail = document.createElement('div');
+        thumbnail.className = 'history-thumbnail';
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        thumbnail.appendChild(img);
+        
+        // Add results
+        const resultsContainer = document.createElement('div');
+        resultsContainer.className = 'history-results';
+        
+        if (results.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'no-results';
+            noResults.textContent = 'No matches found';
+            resultsContainer.appendChild(noResults);
+        } else {
+            results.forEach(result => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                const platformName = document.createElement('div');
+                platformName.className = 'platform-name';
+                platformName.textContent = `${result.platform}: `;
+                
+                const resultCount = document.createElement('span');
+                resultCount.className = 'result-count';
+                resultCount.textContent = `${result.count} match${result.count > 1 ? 'es' : ''}`;
+                
+                const resultLinks = document.createElement('div');
+                resultLinks.className = 'result-links';
+                
+                result.links.forEach(link => {
+                    const linkItem = document.createElement('a');
+                    linkItem.href = 'javascript:void(0)'; // Dummy link
+                    linkItem.className = 'result-link';
+                    linkItem.textContent = `@${link.username} (${link.confidence}% match)`;
+                    
+                    // Show alert when clicked
+                    linkItem.addEventListener('click', () => {
+                        telegramHandler.showAlert(`This would open ${link.url} in a new window.`);
+                    });
+                    
+                    resultLinks.appendChild(linkItem);
+                });
+                
+                platformName.appendChild(resultCount);
+                resultItem.appendChild(platformName);
+                resultItem.appendChild(resultLinks);
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+        
+        // Assemble history item
+        historyItem.appendChild(timestamp);
+        historyItem.appendChild(thumbnail);
+        historyItem.appendChild(resultsContainer);
+        
+        // Add to container
+        historyContainer.prepend(historyItem);
     }
 }
 
@@ -540,13 +772,14 @@ class NavigationHandler {
             modalHandler.closeModal();
         }
 
-        // Hide upload and preview sections
+        // Hide all sections except history
         document.querySelector('.upload-section').style.display = 'none';
         document.querySelector('.preview-section').style.display = 'none';
+        document.querySelector('.platform-selection').style.display = 'none';
+        document.querySelector('.search-progress').style.display = 'none';
 
-        // Show history section (to be implemented)
-        // For now, just show a message
-        telegramHandler.showAlert('History feature coming soon!');
+        // Show history section
+        document.querySelector('.history-section').style.display = 'block';
     }
 }
 
@@ -642,28 +875,26 @@ class ValidationUtils {
 
 // Helper Utils
 class HelperUtils {
+    static generateUniqueId(prefix = 'id') {
+        return `${prefix}_${Math.random().toString(36).substring(2, 11)}`;
+    }
+
     static formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
-        
         const k = 1024;
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-
+    
     static formatDate(date) {
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(date);
-    }
-
-    static generateUniqueId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
     }
 
     static debounce(func, wait) {
@@ -744,11 +975,138 @@ class HelperUtils {
     }
 }
 
+// Plan Handler
+class PlanHandler {
+    constructor() {
+        this.planCards = document.querySelectorAll('.tariff-card');
+        this.buyButtons = document.querySelectorAll('.tariff-buy-btn');
+        this.paymentMethods = document.querySelectorAll('.payment-method-item');
+        this.payButton = document.querySelector('.payment-button');
+        this.paymentSection = document.querySelector('.payment-section');
+        this.tariffSection = document.querySelector('.tariff-section');
+        this.paymentSuccessBlock = document.querySelector('.payment-success');
+        this.backToSearchBtn = document.querySelector('.back-to-search-btn');
+        
+        this.selectedPlan = null;
+        this.selectedPaymentMethod = null;
+    }
+
+    init() {
+        this.initEventListeners();
+    }
+
+    initEventListeners() {
+        // Plan selection
+        this.planCards.forEach(card => {
+            card.addEventListener('click', () => {
+                this.selectPlan(card);
+            });
+        });
+
+        // Buy button clicks
+        this.buyButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent the card click event
+                const card = button.closest('.tariff-card');
+                this.selectPlan(card);
+                this.showPaymentMethods();
+            });
+        });
+
+        // Payment method selection
+        this.paymentMethods.forEach(method => {
+            method.addEventListener('click', () => {
+                this.selectPaymentMethod(method);
+            });
+        });
+
+        // Pay button click
+        if (this.payButton) {
+            this.payButton.addEventListener('click', () => {
+                this.processPayment();
+            });
+        }
+
+        // Back to search button click
+        if (this.backToSearchBtn) {
+            this.backToSearchBtn.addEventListener('click', () => {
+                this.hidePaymentSuccess();
+                document.querySelector('.upload-section').classList.remove('hidden');
+                document.querySelector('.tariff-section').classList.add('hidden');
+            });
+        }
+    }
+
+    selectPlan(card) {
+        // Remove 'selected' class from all cards
+        this.planCards.forEach(c => c.classList.remove('selected'));
+        
+        // Add 'selected' class to the clicked card
+        card.classList.add('selected');
+        
+        // Store the selected plan
+        this.selectedPlan = {
+            id: card.dataset.planId,
+            name: card.querySelector('.tariff-name').textContent,
+            price: card.querySelector('.tariff-price').textContent,
+        };
+    }
+
+    showPaymentMethods() {
+        this.tariffSection.classList.add('hidden');
+        this.paymentSection.classList.remove('hidden');
+    }
+
+    selectPaymentMethod(method) {
+        // Remove 'selected' class from all methods
+        this.paymentMethods.forEach(m => m.classList.remove('selected'));
+        
+        // Add 'selected' class to the clicked method
+        method.classList.add('selected');
+        
+        // Store the selected payment method
+        this.selectedPaymentMethod = method.dataset.method;
+        
+        // Enable the pay button
+        this.payButton.disabled = false;
+    }
+
+    processPayment() {
+        if (!this.selectedPlan || !this.selectedPaymentMethod) {
+            return;
+        }
+
+        // Show loading state
+        this.payButton.textContent = 'Processing...';
+        this.payButton.disabled = true;
+
+        // Simulate payment processing
+        setTimeout(() => {
+            // Store the selected plan in localStorage
+            localStorage.setItem('selectedPlan', JSON.stringify(this.selectedPlan));
+            
+            // Show success message
+            this.showPaymentSuccess();
+        }, 2000);
+    }
+
+    showPaymentSuccess() {
+        this.paymentSection.classList.add('hidden');
+        this.paymentSuccessBlock.classList.remove('hidden');
+    }
+
+    hidePaymentSuccess() {
+        this.paymentSuccessBlock.classList.add('hidden');
+    }
+}
+
 // Initialize handlers
 let telegramHandler;
 let uploadHandler;
 let modalHandler;
 let navigationHandler;
+let platformHandler;
+let planHandler;
 
 // Add CSS selector support for jQuery-like syntax
 if (!HTMLElement.prototype.querySelectorAll) {
@@ -776,6 +1134,8 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadHandler = new UploadHandler();
     modalHandler = new ModalHandler();
     navigationHandler = new NavigationHandler();
+    platformHandler = new PlatformHandler();
+    planHandler = new PlanHandler();
 
     // Handle errors
     window.onerror = function(message, source, lineno, colno, error) {
