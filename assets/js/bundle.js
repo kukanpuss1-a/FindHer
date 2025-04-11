@@ -841,8 +841,63 @@ class NavigationHandler {
     }
 }
 
-// Initialize handlers
-const telegramHandler = new TelegramHandler();
-const uploadHandler = new UploadHandler();
-const modalHandler = new ModalHandler();
-const navigationHandler = new NavigationHandler(); 
+// Check if DOM is already loaded
+function domReady(callback) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', callback);
+    } else {
+        callback();
+    }
+}
+
+// Initialize handlers after DOM is fully loaded
+domReady(() => {
+    console.log('DOM Ready - Initializing handlers');
+    
+    try {
+        // Check if running in Telegram WebApp
+        if (!window.Telegram?.WebApp) {
+            console.error('Telegram WebApp is not available');
+            document.body.innerHTML = '<div class="error">This app must be opened in Telegram</div>';
+            return;
+        }
+
+        // Initialize Telegram WebApp
+        window.Telegram.WebApp.expand();
+        window.Telegram.WebApp.ready();
+
+        console.log('Creating handler instances');
+        
+        // Create global handler instances
+        window.telegramHandler = new TelegramHandler();
+        window.uploadHandler = new UploadHandler();
+        window.modalHandler = new ModalHandler();
+        window.navigationHandler = new NavigationHandler();
+
+        // Handle errors
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error('Global error:', { message, source, lineno, colno, error });
+            if (window.telegramHandler) {
+                window.telegramHandler.showAlert('An error occurred. Please try again.');
+            }
+            return false;
+        };
+
+        // Handle unhandled promise rejections
+        window.onunhandledrejection = function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            if (window.telegramHandler) {
+                window.telegramHandler.showAlert('An error occurred. Please try again.');
+            }
+        };
+        
+        console.log('Handler initialization complete');
+        
+        // Hide loading screen
+        document.body.classList.add('loaded');
+    } catch (error) {
+        console.error('Fatal error during initialization:', error);
+        // Try to hide loading screen even on error
+        document.body.classList.add('loaded');
+    }
+}); 

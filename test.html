@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindHer Test</title>
+    <style>
+        body {
+            background: #333;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #00e5ff;
+        }
+        
+        iframe {
+            border: none;
+            width: 100%;
+            height: 80vh;
+            max-width: 450px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .note {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>FindHer App Test Environment</h1>
+    <div class="note">Note: This is a testing environment. The app is designed to run inside Telegram's WebView.</div>
+    
+    <iframe src="index.html" allow="camera"></iframe>
+    
+    <script>
+        // Mock Telegram WebApp object
+        window.Telegram = {
+            WebApp: {
+                ready: function() { console.log('WebApp ready called'); },
+                expand: function() { console.log('WebApp expand called'); },
+                setHeaderColor: function(color) { console.log('Header color set to:', color); },
+                setBackgroundColor: function(color) { console.log('Background color set to:', color); },
+                enableClosingConfirmation: function() { console.log('Closing confirmation enabled'); },
+                BackButton: {
+                    show: function() { console.log('Back button shown'); },
+                    hide: function() { console.log('Back button hidden'); },
+                    onClick: function(callback) { console.log('Back button click handler set'); }
+                },
+                onEvent: function(eventName, callback) { 
+                    console.log('Subscribed to event:', eventName); 
+                },
+                showAlert: function(message) { 
+                    console.log('ALERT:', message);
+                    alert(message);
+                },
+                showConfirm: function(message, callback) { 
+                    console.log('CONFIRM:', message);
+                    const result = confirm(message);
+                    if (callback) callback(result);
+                    return result;
+                },
+                sendData: function(data) { 
+                    console.log('DATA SENT:', data);
+                    return true;
+                },
+                initDataUnsafe: {
+                    user: {
+                        id: 123456789,
+                        first_name: 'Test',
+                        last_name: 'User',
+                        username: 'testuser',
+                        language_code: 'en'
+                    }
+                },
+                colorScheme: 'dark',
+                themeParams: {
+                    bg_color: '#121212',
+                    text_color: '#ffffff',
+                    hint_color: '#aaaaaa',
+                    link_color: '#00e5ff',
+                    button_color: '#00e5ff',
+                    button_text_color: '#121212'
+                }
+            }
+        };
+    </script>
+</body>
+</html> 

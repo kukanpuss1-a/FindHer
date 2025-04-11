@@ -590,11 +590,14 @@ button:focus {
     justify-content: center;
     z-index: 9999;
     opacity: 1;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    visibility: visible;
 }
 
-.loading-screen.hidden {
+.loading-screen.hidden,
+body.loaded .loading-screen {
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
 }
 
@@ -602,11 +605,6 @@ button:focus {
     width: 80px;
     height: 80px;
     animation: pulse 1.5s ease-in-out infinite;
-}
-
-body.loaded .loading-screen {
-    opacity: 0;
-    pointer-events: none;
 }
 
 /* History Section */

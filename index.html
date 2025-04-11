@@ -234,6 +234,47 @@
     </nav>
 
     <!-- Scripts -->
+    <script>
+        // Initialize mock data
+        window.fhBalance = 0;
+        window.transactionHistory = [];
+        window.searchHistory = [
+            {
+                id: 'search_1',
+                image: 'https://via.placeholder.com/150/00e5ff/ffffff?text=Search1',
+                date: '2023-11-10',
+                results: 'Found on 3 websites'
+            },
+            {
+                id: 'search_2',
+                image: 'https://via.placeholder.com/150/ff80ab/ffffff?text=Search2',
+                date: '2023-11-15',
+                results: 'Found on 5 websites'
+            }
+        ];
+
+        // Force-hide loading screen after a timeout to prevent infinite loading
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.body.classList.add('loaded');
+                console.log('Forced loading screen to hide after timeout');
+            }, 2000);
+        });
+        
+        // Also hide loading when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.body.classList.add('loaded');
+                console.log('Loading screen hidden on DOMContentLoaded');
+            }, 1000);
+        });
+        
+        // Fallback in case other events don't trigger
+        setTimeout(function() {
+            document.body.classList.add('loaded');
+            console.log('Fallback: Forced loading screen to hide after absolute timeout');
+        }, 5000);
+    </script>
     <script src="assets/js/bundle.js"></script>
 </body>
 </html> 
