@@ -29,8 +29,15 @@ class TelegramHandler {
                 this.closeModal();
             } else if (document.querySelector('.preview-section').style.display !== 'none') {
                 this.handleBackFromPreview();
+            } else if (document.getElementById('welcomeScreen').style.display === 'flex') {
+                // Close welcome screen if open
+                navigationHandler.hideWelcomeScreen();
             } else {
                 // Add your back navigation logic here
+                // Default to main page if on another page
+                if (navigationHandler.currentPage !== 'search') {
+                    navigationHandler.navigateToPage('search');
+                }
             }
         });
 
@@ -57,14 +64,17 @@ class TelegramHandler {
     }
 
     showModal() {
-        const modal = document.getElementById('tariffModal');
-        modal.classList.add('show');
-        this.webApp.BackButton.show();
+        const modal = document.querySelector('.modal.show');
+        if (modal) {
+            this.webApp.BackButton.show();
+        }
     }
 
     closeModal() {
-        const modal = document.getElementById('tariffModal');
-        modal.classList.remove('show');
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.classList.remove('show');
+        });
         
         // Only hide back button if preview section is not shown
         if (document.querySelector('.preview-section').style.display === 'none') {
@@ -114,9 +124,10 @@ class UploadHandler {
         this.photoInput = document.getElementById('photoInput');
         this.previewSection = document.querySelector('.preview-section');
         this.previewImage = document.getElementById('previewImage');
-        this.fileTypeBadge = document.querySelector('.file-type-badge');
         this.searchButton = document.querySelector('.btn-search');
         this.cancelButton = document.querySelector('.btn-cancel');
+        
+        this.selectedFile = null;
         
         this.init();
     }
@@ -140,18 +151,15 @@ class UploadHandler {
         this.uploadBox.addEventListener('dragover', (event) => {
             event.preventDefault();
             this.uploadBox.classList.add('dragover');
-            this.uploadBox.querySelector('.upload-icon').classList.add('dragover');
         });
 
         this.uploadBox.addEventListener('dragleave', () => {
             this.uploadBox.classList.remove('dragover');
-            this.uploadBox.querySelector('.upload-icon').classList.remove('dragover');
         });
 
         this.uploadBox.addEventListener('drop', (event) => {
             event.preventDefault();
             this.uploadBox.classList.remove('dragover');
-            this.uploadBox.querySelector('.upload-icon').classList.remove('dragover');
             
             const files = event.dataTransfer.files;
             if (files.length > 0) {
@@ -160,29 +168,41 @@ class UploadHandler {
         });
 
         // Handle search button click
-        this.searchButton?.addEventListener('click', () => {
-            this.sendToTelegram();
-        });
+        if (this.searchButton) {
+            this.searchButton.addEventListener('click', () => {
+                this.processImageSearch();
+            });
+        }
 
         // Handle cancel button click
-        this.cancelButton?.addEventListener('click', () => {
-            this.resetUpload();
-        });
+        if (this.cancelButton) {
+            this.cancelButton.addEventListener('click', () => {
+                this.cancelPreview();
+            });
+        }
     }
 
-    async handleFileSelect(event) {
+    handleFileSelect(event) {
         const file = event.target.files[0];
         
         if (!file) return;
 
-        // Validate file
-        const validation = await ValidationUtils.validateImage(file);
-        if (!validation.isValid) {
-            this.showError(validation.error);
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            this.showError('Please select an image file');
             return;
         }
 
-        this.uploadFile = file;
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            this.showError('File size should be less than 5MB');
+            return;
+        }
+
+        // Store the selected file
+        this.selectedFile = file;
+        
+        // Show preview
         this.showPreview(file);
         
         // Show back button
@@ -192,29 +212,27 @@ class UploadHandler {
     showPreview(file) {
         const reader = new FileReader();
         
-        // Add loading state to upload box
-        this.uploadBox.classList.add('loading');
-        
-        // Show file extension in badge
-        const fileExt = file.name.split('.').pop().toUpperCase();
-        this.fileTypeBadge.textContent = fileExt;
-        
         reader.onload = (e) => {
             this.previewImage.src = e.target.result;
+            
+            // Set the file type badge
+            const fileTypeBadge = this.previewSection.querySelector('.file-type-badge');
+            if (fileTypeBadge) {
+                const extension = file.name.split('.').pop().toUpperCase();
+                fileTypeBadge.textContent = extension;
+            }
+            
             this.previewSection.style.display = 'block';
             this.uploadBox.style.display = 'none';
-            this.uploadBox.classList.remove('loading');
         };
 
         reader.readAsDataURL(file);
     }
 
-    resetUpload() {
+    cancelPreview() {
         this.previewSection.style.display = 'none';
         this.uploadBox.style.display = 'block';
-        this.previewImage.src = '';
-        this.photoInput.value = '';
-        this.uploadFile = null;
+        this.selectedFile = null;
         
         // Hide back button
         telegramHandler.webApp.BackButton.hide();
@@ -222,6 +240,9 @@ class UploadHandler {
 
     showError(message) {
         this.uploadBox.classList.add('error');
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent = message;
         
         // Remove existing error message if any
         const existingError = this.uploadBox.querySelector('.error-message');
@@ -229,9 +250,6 @@ class UploadHandler {
             existingError.remove();
         }
         
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'error-message';
-        errorMessage.textContent = message;
         this.uploadBox.appendChild(errorMessage);
         
         // Remove error state after 3 seconds
@@ -241,72 +259,114 @@ class UploadHandler {
         }, 3000);
     }
 
-    async sendToTelegram() {
-        if (!this.uploadFile) {
-            this.showError('No file selected');
+    async processImageSearch() {
+        if (!this.selectedFile) {
+            telegramHandler.showAlert('No image selected');
             return;
         }
-
+        
+        // Check if user has enough FH coins
+        if (!window.fhBalance || window.fhBalance < 250) {
+            telegramHandler.showAlert('You need at least 250 FH coins to perform a search. Please purchase coins first.');
+            
+            // Navigate to tariffs page
+            navigationHandler.navigateToPage('tariffs');
+            return;
+        }
+        
         try {
-            // Add loading overlay
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            
-            const spinner = document.createElement('div');
-            spinner.className = 'loading-spinner';
-            
-            const loadingText = document.createElement('div');
-            loadingText.className = 'loading-text';
-            loadingText.textContent = 'Processing...';
-            
-            loadingOverlay.appendChild(spinner);
-            loadingOverlay.appendChild(loadingText);
-            
-            this.previewSection.querySelector('.preview-container').appendChild(loadingOverlay);
-            
-            // Disable search button
+            // Show loading state
             this.searchButton.disabled = true;
-            
-            // Compress image if it's too large
-            let fileToSend = this.uploadFile;
-            if (this.uploadFile.size > 1024 * 1024) { // If larger than 1MB
-                fileToSend = await HelperUtils.compressImage(this.uploadFile);
-            }
+            this.searchButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
             
             // Convert file to base64
-            const base64 = await this.fileToBase64(fileToSend);
+            const base64 = await this.fileToBase64(this.selectedFile);
+            
+            // Create search data
+            const searchData = {
+                type: 'image_search',
+                photo: base64,
+                filename: this.selectedFile.name,
+                size: this.selectedFile.size,
+                timestamp: new Date().toISOString()
+            };
             
             // Send data to Telegram
-            const data = {
-                type: 'photo_upload',
-                photo: base64,
-                filename: fileToSend.name,
-                size: fileToSend.size,
-                originalSize: this.uploadFile.size,
-                timestamp: Date.now()
-            };
-
-            const success = telegramHandler.sendData(data);
+            const success = telegramHandler.sendData(searchData);
             
-            // Remove loading overlay
-            setTimeout(() => {
-                loadingOverlay.remove();
-                this.searchButton.disabled = false;
+            if (success) {
+                // Deduct FH coins
+                modalHandler.updateFHBalance(-250);
                 
-                if (success) {
-                    // Show success message or navigate to result page
-                    telegramHandler.showAlert('Photo uploaded successfully! Search results will be available soon.');
-                    // Reset upload for next image
-                    this.resetUpload();
-                } else {
-                    this.showError('Failed to send photo to Telegram');
-                }
-            }, 1500); // Slight delay for better UX
-            
+                // Add to search history
+                this.addToSearchHistory(searchData);
+                
+                // Show success message
+                telegramHandler.showAlert('Search successful! Results will be available soon.');
+                
+                // Reset the form
+                this.cancelPreview();
+            } else {
+                telegramHandler.showAlert('Failed to process search. Please try again.');
+            }
         } catch (error) {
-            console.error('Error processing photo:', error);
-            this.showError('Error processing photo');
+            console.error('Error processing search:', error);
+            telegramHandler.showAlert('Error processing search');
+        } finally {
+            // Reset button state
             this.searchButton.disabled = false;
+            this.searchButton.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Search Online';
+        }
+    }
+
+    addToSearchHistory(searchData) {
+        // This is a mock function that would typically communicate with a backend
+        if (!window.searchHistory) {
+            window.searchHistory = [];
+        }
+        
+        // Add to history
+        const searchItem = {
+            id: 'search_' + Date.now(),
+            image: this.previewImage.src,
+            date: new Date().toLocaleDateString(),
+            results: 'Processing...',
+            status: 'pending'
+        };
+        
+        window.searchHistory.unshift(searchItem);
+        
+        // Update UI if on history page
+        if (navigationHandler.currentPage === 'history') {
+            navigationHandler.loadHistoryData();
+        }
+        
+        // Also add to profile archive tab
+        const archiveTab = document.getElementById('archiveTab');
+        if (archiveTab) {
+            const searchArchive = archiveTab.querySelector('.search-archive');
+            if (searchArchive) {
+                // Clear empty state if present
+                if (searchArchive.querySelector('.empty-state')) {
+                    searchArchive.innerHTML = '';
+                }
+                
+                // Create archive item
+                const archiveItem = document.createElement('div');
+                archiveItem.className = 'card history-item';
+                
+                archiveItem.innerHTML = `
+                    <div class="history-item-image">
+                        <img src="${searchItem.image}" alt="Search image">
+                    </div>
+                    <div class="history-item-details">
+                        <div class="history-item-date">${searchItem.date}</div>
+                        <div class="history-item-results">${searchItem.results}</div>
+                    </div>
+                `;
+                
+                searchArchive.prepend(archiveItem);
+            }
         }
     }
 
@@ -323,19 +383,22 @@ class UploadHandler {
 // Modal Handler
 class ModalHandler {
     constructor() {
-        this.modal = document.getElementById('tariffModal');
-        this.closeButton = this.modal.querySelector('.close-modal');
-        this.tariffButtons = this.modal.querySelectorAll('.select-tariff');
+        this.paymentModal = document.getElementById('paymentModal');
+        this.closeButton = this.paymentModal.querySelector('.close-modal');
+        this.paymentMethods = this.paymentModal.querySelectorAll('.payment-method');
+        this.confirmButton = this.paymentModal.querySelector('.payment-confirm');
+        this.coinAmountElement = document.getElementById('coinAmount');
+        this.coinPriceElement = document.getElementById('coinPrice');
+        
+        this.selectedTariff = null;
+        this.selectedPaymentMethod = null;
         
         this.init();
     }
 
     init() {
         this.setupEventListeners();
-        // Show modal on page load after a short delay
-        setTimeout(() => {
-            this.showModal();
-        }, 800);
+        // We don't show modal on page load anymore
     }
 
     setupEventListeners() {
@@ -345,69 +408,222 @@ class ModalHandler {
         });
 
         // Close modal when clicking outside
-        this.modal.addEventListener('click', (event) => {
-            if (event.target === this.modal) {
+        this.paymentModal.addEventListener('click', (event) => {
+            if (event.target === this.paymentModal) {
                 this.closeModal();
             }
         });
 
-        // Handle tariff selection
-        this.tariffButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const tariffOption = event.target.closest('.tariff-option');
-                const tariffName = tariffOption.querySelector('h3').textContent;
-                const tariffPrice = tariffOption.querySelector('.price').textContent;
-                this.handleTariffSelection(tariffName, tariffPrice);
+        // Handle payment method selection
+        this.paymentMethods.forEach(method => {
+            method.addEventListener('click', () => {
+                this.selectPaymentMethod(method);
+            });
+        });
+
+        // Handle confirm button
+        if (this.confirmButton) {
+            this.confirmButton.addEventListener('click', () => {
+                this.processPayment();
+            });
+        }
+
+        // Handle tariff selection on the tariffs page
+        const tariffButtons = document.querySelectorAll('.tariff-option .select-tariff');
+        tariffButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const amount = button.dataset.amount;
+                const price = button.dataset.price;
+                this.showPaymentModal(amount, price);
             });
         });
     }
 
-    showModal() {
-        this.modal.classList.add('show');
-        telegramHandler.showModal();
+    showPaymentModal(coinAmount, price) {
+        // Set the tariff details
+        this.selectedTariff = {
+            amount: coinAmount,
+            price: price
+        };
+        
+        // Update the UI
+        if (this.coinAmountElement) {
+            this.coinAmountElement.textContent = coinAmount;
+        }
+        
+        if (this.coinPriceElement) {
+            this.coinPriceElement.textContent = price;
+        }
+        
+        // Reset payment method selection
+        this.resetPaymentMethodSelection();
+        
+        // Show the modal
+        this.paymentModal.classList.add('show');
+        
+        // Notify Telegram
+        if (window.telegramHandler) {
+            telegramHandler.showModal();
+        }
     }
 
     closeModal() {
-        this.modal.classList.remove('show');
-        telegramHandler.closeModal();
+        this.paymentModal.classList.remove('show');
+        
+        // Notify Telegram
+        if (window.telegramHandler) {
+            telegramHandler.closeModal();
+        }
     }
 
-    async handleTariffSelection(tariffName, tariffPrice) {
-        // Validate tariff selection
-        const validation = ValidationUtils.validateTariffSelection(tariffName, tariffPrice);
-        if (!validation.isValid) {
-            telegramHandler.showAlert(validation.error);
+    selectPaymentMethod(methodElement) {
+        // Remove active class from all methods
+        this.paymentMethods.forEach(method => {
+            method.classList.remove('active');
+        });
+        
+        // Add active class to selected method
+        methodElement.classList.add('active');
+        
+        // Store the selected method
+        this.selectedPaymentMethod = methodElement.dataset.method;
+        
+        // Enable the confirm button
+        if (this.confirmButton) {
+            this.confirmButton.disabled = false;
+        }
+    }
+
+    resetPaymentMethodSelection() {
+        this.paymentMethods.forEach(method => {
+            method.classList.remove('active');
+        });
+        
+        this.selectedPaymentMethod = null;
+        
+        if (this.confirmButton) {
+            this.confirmButton.disabled = true;
+        }
+    }
+
+    async processPayment() {
+        if (!this.selectedTariff || !this.selectedPaymentMethod) {
+            // Show error - should not happen as button should be disabled
+            if (window.telegramHandler) {
+                telegramHandler.showAlert('Please select a payment method.');
+            }
             return;
         }
         
-        const confirmed = await telegramHandler.showConfirm(
-            `Are you sure you want to select the ${tariffName} plan for ${tariffPrice}?`
-        );
-
+        // Create payment data
+        const paymentData = {
+            type: 'coin_purchase',
+            amount: this.selectedTariff.amount,
+            price: this.selectedTariff.price,
+            payment_method: this.selectedPaymentMethod,
+            timestamp: new Date().toISOString()
+        };
+        
+        // In a real app, we would send this to the backend
+        // For now, just show a confirmation
+        let confirmMessage = `Purchase ${this.selectedTariff.amount} FH coins for ${this.selectedTariff.price} USDT using ${this.selectedPaymentMethod}?`;
+        
+        const confirmed = await telegramHandler.showConfirm(confirmMessage);
+        
         if (confirmed) {
-            // Show loading indicator
-            telegramHandler.showLoadingIndicator();
+            // Send data to Telegram
+            const success = telegramHandler.sendData(paymentData);
             
-            setTimeout(() => {
-                // Simulate API request
-                const data = {
-                    type: 'tariff_selection',
-                    tariff: tariffName,
-                    price: tariffPrice,
-                    timestamp: Date.now()
-                };
-
-                const success = telegramHandler.sendData(data);
-                telegramHandler.closeLoadingIndicator();
-
-                if (success) {
-                    telegramHandler.showAlert('Tariff selected successfully!');
-                    this.closeModal();
-                } else {
-                    telegramHandler.showAlert('Failed to process tariff selection. Please try again.');
-                }
-            }, 1000);
+            if (success) {
+                // Add to transaction history (in a real app this would come from the server)
+                this.addToTransactionHistory(paymentData);
+                
+                // Show success message
+                telegramHandler.showAlert('Payment processed successfully!');
+                
+                // Update FH balance (mock for demo purposes)
+                this.updateFHBalance(parseInt(this.selectedTariff.amount));
+                
+                // Close the modal
+                this.closeModal();
+            } else {
+                telegramHandler.showAlert('Failed to process payment. Please try again.');
+            }
         }
+    }
+
+    addToTransactionHistory(paymentData) {
+        // This is a mock function that would typically communicate with a backend
+        // For demo purposes, we'll just add to a local array
+        if (!window.transactionHistory) {
+            window.transactionHistory = [];
+        }
+        
+        window.transactionHistory.push({
+            id: 'tx_' + Date.now(),
+            type: 'purchase',
+            amount: paymentData.amount,
+            price: paymentData.price,
+            method: paymentData.payment_method,
+            date: new Date().toLocaleDateString(),
+            status: 'completed'
+        });
+        
+        // Update the UI if on the profile page
+        const transactionsList = document.querySelector('.transaction-list');
+        if (transactionsList) {
+            this.updateTransactionHistoryUI();
+        }
+    }
+
+    updateTransactionHistoryUI() {
+        const transactionsList = document.querySelector('.transaction-list');
+        if (!transactionsList) return;
+        
+        // Clear current items
+        transactionsList.innerHTML = '';
+        
+        if (window.transactionHistory && window.transactionHistory.length > 0) {
+            // Add each transaction
+            window.transactionHistory.forEach(tx => {
+                const item = document.createElement('div');
+                item.className = 'transaction-item';
+                
+                item.innerHTML = `
+                    <div class="transaction-icon">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">Purchase ${tx.amount} FH coins</div>
+                        <div class="transaction-date">${tx.date}</div>
+                    </div>
+                    <div class="transaction-amount">
+                        ${tx.price} USDT
+                    </div>
+                `;
+                
+                transactionsList.appendChild(item);
+            });
+        } else {
+            // Show empty state
+            transactionsList.innerHTML = '<div class="empty-state text-center"><p>No transactions yet</p></div>';
+        }
+    }
+
+    updateFHBalance(amount) {
+        // In a real app, this would come from the server
+        // For demo purposes, we'll just update the UI
+        if (!window.fhBalance) {
+            window.fhBalance = 0;
+        }
+        
+        window.fhBalance += amount;
+        
+        // Update all FH balance displays
+        const balanceElements = document.querySelectorAll('.currency-amount');
+        balanceElements.forEach(el => {
+            el.textContent = window.fhBalance;
+        });
     }
 }
 
@@ -416,12 +632,21 @@ class NavigationHandler {
     constructor() {
         this.navItems = document.querySelectorAll('.nav-item');
         this.currentPage = 'search';
+        this.pages = {
+            search: document.getElementById('searchPage'),
+            tariffs: document.getElementById('tariffsPage'),
+            history: document.getElementById('historyPage'),
+            profile: document.getElementById('profilePage')
+        };
+        this.welcomeScreen = document.getElementById('welcomeScreen');
+        this.welcomeButton = document.getElementById('welcomeButton');
         
         this.init();
     }
 
     init() {
         this.setupEventListeners();
+        this.showWelcomeScreen();
     }
 
     setupEventListeners() {
@@ -431,12 +656,25 @@ class NavigationHandler {
                 this.navigateToPage(page);
             });
         });
+
+        // Welcome screen continue button
+        if (this.welcomeButton) {
+            this.welcomeButton.addEventListener('click', () => {
+                this.hideWelcomeScreen();
+            });
+        }
+
+        // Profile tab navigation
+        const profileTabs = document.querySelectorAll('.profile-tab');
+        profileTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                this.switchProfileTab(tabName);
+            });
+        });
     }
 
     navigateToPage(page) {
-        // Skip if already on the page
-        if (this.currentPage === page) return;
-        
         // Remove active class from all items
         this.navItems.forEach(item => {
             item.classList.remove('active');
@@ -445,6 +683,16 @@ class NavigationHandler {
         // Add active class to selected item
         const selectedItem = document.querySelector(`[data-page="${page}"]`);
         selectedItem.classList.add('active');
+
+        // Hide all pages
+        Object.values(this.pages).forEach(pageElement => {
+            if (pageElement) pageElement.classList.add('hidden');
+        });
+
+        // Show selected page
+        if (this.pages[page]) {
+            this.pages[page].classList.remove('hidden');
+        }
 
         // Handle page-specific actions
         switch (page) {
@@ -457,372 +705,144 @@ class NavigationHandler {
             case 'history':
                 this.showHistoryPage();
                 break;
+            case 'profile':
+                this.showProfilePage();
+                break;
         }
 
         this.currentPage = page;
     }
 
-    showSearchPage() {
-        // Hide modal if it's open
-        const modal = document.getElementById('tariffModal');
-        if (modal.classList.contains('show')) {
-            modalHandler.closeModal();
+    showWelcomeScreen() {
+        if (this.welcomeScreen) {
+            this.welcomeScreen.style.display = 'flex';
+            
+            // Hide all page content
+            Object.values(this.pages).forEach(pageElement => {
+                if (pageElement) pageElement.classList.add('hidden');
+            });
         }
+    }
 
-        // Show upload section
-        document.querySelector('.upload-section').style.display = 'block';
-        
-        // Only hide preview if needed
-        if (uploadHandler.uploadFile === null) {
-            document.querySelector('.preview-section').style.display = 'none';
+    hideWelcomeScreen() {
+        if (this.welcomeScreen) {
+            this.welcomeScreen.style.opacity = '0';
+            this.welcomeScreen.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                this.welcomeScreen.style.display = 'none';
+                // Show default page
+                this.navigateToPage('search');
+            }, 500);
+        }
+    }
+
+    showSearchPage() {
+        // Reset UI elements if needed
+        const previewSection = document.querySelector('.preview-section');
+        if (previewSection) {
+            previewSection.style.display = 'none';
         }
     }
 
     showTariffsPage() {
-        // Show tariff modal
-        modalHandler.showModal();
+        // Any specific actions for tariffs page
+        // No need to show the modal anymore as tariffs are now a dedicated page
     }
 
     showHistoryPage() {
-        // Hide modal if it's open
-        const modal = document.getElementById('tariffModal');
-        if (modal.classList.contains('show')) {
-            modalHandler.closeModal();
-        }
-
-        // Hide upload and preview sections
-        document.querySelector('.upload-section').style.display = 'none';
-        document.querySelector('.preview-section').style.display = 'none';
-
-        // Load history data
+        // Load history data if needed
         this.loadHistoryData();
     }
-    
-    async loadHistoryData() {
-        try {
-            // Show loading spinner
-            const container = document.querySelector('.container');
-            const existingHistory = container.querySelector('.history-section');
+
+    showProfilePage() {
+        // Load user profile data
+        this.loadProfileData();
+    }
+
+    loadHistoryData() {
+        // This would typically fetch data from an API
+        // For now, we'll populate with dummy data
+        const historySection = document.querySelector('.history-section');
+        
+        if (historySection) {
+            // Clear existing items
+            historySection.innerHTML = '';
             
-            if (existingHistory) {
-                existingHistory.remove();
+            // Check if there's any history data
+            if (window.searchHistory && window.searchHistory.length > 0) {
+                window.searchHistory.forEach(item => {
+                    const historyItem = this.createHistoryItem(item);
+                    historySection.appendChild(historyItem);
+                });
+            } else {
+                // Show empty state
+                historySection.innerHTML = '<div class="empty-state text-center"><p>No search history yet</p></div>';
+            }
+        }
+    }
+
+    createHistoryItem(item) {
+        const div = document.createElement('div');
+        div.className = 'card history-item';
+        
+        div.innerHTML = `
+            <div class="history-item-image">
+                <img src="${item.image || 'https://via.placeholder.com/80'}" alt="Search image">
+            </div>
+            <div class="history-item-details">
+                <div class="history-item-date">${item.date || new Date().toLocaleDateString()}</div>
+                <div class="history-item-results">${item.results || 'No results found'}</div>
+            </div>
+        `;
+        
+        return div;
+    }
+
+    loadProfileData() {
+        // Load user profile from Telegram if available
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            
+            const profileName = document.getElementById('profileName');
+            const profileUsername = document.getElementById('profileUsername');
+            const profileAvatar = document.getElementById('profileAvatar');
+            
+            if (profileName) {
+                profileName.textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
             }
             
-            const loadingSpinner = document.createElement('div');
-            loadingSpinner.className = 'spinner';
-            container.appendChild(loadingSpinner);
+            if (profileUsername) {
+                profileUsername.textContent = user.username ? '@' + user.username : '';
+            }
             
-            // Fetch history data
-            // For now, simulating with a delay
-            setTimeout(async () => {
-                try {
-                    const response = await fetch('assets/js/history.json');
-                    const data = await response.json();
-                    
-                    // Remove spinner
-                    loadingSpinner.remove();
-                    
-                    // Display history
-                    this.displayHistory(data.history);
-                } catch (error) {
-                    console.error('Error loading history:', error);
-                    loadingSpinner.remove();
-                    telegramHandler.showAlert('Failed to load history data');
-                }
-            }, 800);
-            
-        } catch (error) {
-            console.error('Error in loadHistoryData:', error);
-            telegramHandler.showAlert('An error occurred while loading history');
+            // Telegram doesn't provide avatar in WebApp, would need to be fetched separately
         }
     }
-    
-    displayHistory(historyData) {
-        const container = document.querySelector('.container');
-        
-        // Create history section
-        const historySection = document.createElement('div');
-        historySection.className = 'history-section fade-in';
-        
-        // Add title
-        const title = document.createElement('h2');
-        title.className = 'section-title';
-        title.textContent = 'Search History';
-        historySection.appendChild(title);
-        
-        if (historyData.length === 0) {
-            const emptyMessage = document.createElement('p');
-            emptyMessage.className = 'text-center';
-            emptyMessage.textContent = 'No search history yet';
-            historySection.appendChild(emptyMessage);
-        } else {
-            // Create history items
-            historyData.forEach(item => {
-                const historyCard = document.createElement('div');
-                historyCard.className = 'card mb-2';
-                
-                const cardContent = `
-                    <div class="history-item">
-                        <div class="history-item-image">
-                            <img src="${item.image}" alt="Search">
-                        </div>
-                        <div class="history-item-details">
-                            <div class="history-item-date">${HelperUtils.formatDate(new Date(item.date))}</div>
-                            <div class="history-item-results">
-                                <strong>Found on:</strong> ${item.results.map(r => r.platform).join(', ')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                historyCard.innerHTML = cardContent;
-                historySection.appendChild(historyCard);
-            });
-        }
-        
-        container.appendChild(historySection);
-    }
-}
 
-// Validation Utils
-class ValidationUtils {
-    static validateImage(file) {
-        // Check if file exists
-        if (!file) {
-            return {
-                isValid: false,
-                error: 'No file selected'
-            };
-        }
-
-        // Check file type
-        if (!file.type.startsWith('image/')) {
-            return {
-                isValid: false,
-                error: 'Please select an image file'
-            };
-        }
-
-        // Check file size (max 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-        if (file.size > maxSize) {
-            return {
-                isValid: false,
-                error: 'File size should be less than 5MB'
-            };
-        }
-
-        // Check image dimensions
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                // Check minimum dimensions
-                if (img.width < 100 || img.height < 100) {
-                    resolve({
-                        isValid: false,
-                        error: 'Image dimensions should be at least 100x100 pixels'
-                    });
-                    return;
-                }
-
-                // Check maximum dimensions
-                if (img.width > 4096 || img.height > 4096) {
-                    resolve({
-                        isValid: false,
-                        error: 'Image dimensions should not exceed 4096x4096 pixels'
-                    });
-                    return;
-                }
-
-                resolve({
-                    isValid: true,
-                    error: null
-                });
-            };
-            img.onerror = () => {
-                resolve({
-                    isValid: false,
-                    error: 'Invalid image file'
-                });
-            };
-            img.src = URL.createObjectURL(file);
+    switchProfileTab(tabName) {
+        // Update tab UI
+        const tabs = document.querySelectorAll('.profile-tab');
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
         });
-    }
-
-    static validateTariffSelection(tariffName, tariffPrice) {
-        const validTariffs = ['Standard', 'Premium'];
-        const validPrices = ['8.99 USDT', '24.99 USDT'];
-
-        if (!validTariffs.includes(tariffName)) {
-            return {
-                isValid: false,
-                error: 'Invalid tariff selected'
-            };
-        }
-
-        if (!validPrices.includes(tariffPrice)) {
-            return {
-                isValid: false,
-                error: 'Invalid price for selected tariff'
-            };
-        }
-
-        return {
-            isValid: true,
-            error: null
-        };
-    }
-}
-
-// Helper Utils
-class HelperUtils {
-    static formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
         
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const selectedTab = document.querySelector(`.profile-tab[data-tab="${tabName}"]`);
+        if (selectedTab) selectedTab.classList.add('active');
         
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    static formatDate(date) {
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(date);
-    }
-
-    static generateUniqueId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
-    }
-
-    static debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    static async loadImage(url) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = url;
+        // Update content
+        const tabContents = document.querySelectorAll('.profile-tab-content');
+        tabContents.forEach(content => {
+            content.classList.remove('active');
         });
-    }
-
-    static getImageDimensions(file) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => {
-                resolve({
-                    width: img.width,
-                    height: img.height
-                });
-            };
-            img.onerror = reject;
-            img.src = URL.createObjectURL(file);
-        });
-    }
-
-    static compressImage(file, maxWidth = 800, maxHeight = 800) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > maxWidth) {
-                        height *= maxWidth / width;
-                        width = maxWidth;
-                    }
-                } else {
-                    if (height > maxHeight) {
-                        width *= maxHeight / height;
-                        height = maxHeight;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                canvas.toBlob(
-                    (blob) => {
-                        resolve(new File([blob], file.name, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        }));
-                    },
-                    'image/jpeg',
-                    0.7
-                );
-            };
-            img.onerror = reject;
-            img.src = URL.createObjectURL(file);
-        });
-    }
-    
-    static addHistoryItem(data) {
-        // This would typically send data to the server
-        // For now, just logging
-        console.log('Adding history item:', data);
+        
+        const selectedContent = document.getElementById(`${tabName}Tab`);
+        if (selectedContent) selectedContent.classList.add('active');
     }
 }
 
 // Initialize handlers
-let telegramHandler;
-let uploadHandler;
-let modalHandler;
-let navigationHandler;
-
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Hide loading screen after 1 second
-    setTimeout(() => {
-        document.querySelector('.loading-screen')?.classList.add('hidden');
-    }, 1000);
-    
-    // Check if running in Telegram WebApp
-    if (!window.Telegram?.WebApp) {
-        console.error('Telegram WebApp is not available');
-        document.body.innerHTML = '<div style="color:white;text-align:center;padding:20px;">This app must be opened in Telegram</div>';
-        return;
-    }
-
-    // Initialize handlers
-    telegramHandler = new TelegramHandler();
-    uploadHandler = new UploadHandler();
-    modalHandler = new ModalHandler();
-    navigationHandler = new NavigationHandler();
-
-    // Handle errors
-    window.onerror = function(message, source, lineno, colno, error) {
-        console.error('Global error:', { message, source, lineno, colno, error });
-        telegramHandler?.showAlert('An error occurred. Please try again.');
-        return false;
-    };
-
-    // Handle unhandled promise rejections
-    window.onunhandledrejection = function(event) {
-        console.error('Unhandled promise rejection:', event.reason);
-        telegramHandler?.showAlert('An error occurred. Please try again.');
-    };
-
-    // Add loading state to body
-    document.body.classList.add('loaded');
-}); 
+const telegramHandler = new TelegramHandler();
+const uploadHandler = new UploadHandler();
+const modalHandler = new ModalHandler();
+const navigationHandler = new NavigationHandler(); 
