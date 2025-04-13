@@ -14,6 +14,12 @@ function initApp() {
         document.body.classList.add('loaded');
     }, 1000);
 
+    // Initially hide the bottom navigation
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) {
+        bottomNav.classList.add('hidden');
+    }
+
     // Init Telegram WebApp
     if (window.Telegram && window.Telegram.WebApp) {
         try {
@@ -35,8 +41,7 @@ function initApp() {
     // First-time user sees welcome screen, returning user goes to search page
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
     if (hasSeenWelcome) {
-        document.getElementById('welcomeScreen').classList.add('hidden');
-        document.getElementById('searchPage').classList.remove('hidden');
+        showMainApp();
     } else {
         document.getElementById('welcomeScreen').classList.remove('hidden');
         document.getElementById('searchPage').classList.add('hidden');
@@ -49,6 +54,30 @@ function initApp() {
     loadHistoryData();
 }
 
+// Show main app (after welcome screen)
+function showMainApp() {
+    // Hide welcome screen with animation
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    if (welcomeScreen) {
+        welcomeScreen.classList.add('hidden');
+    }
+    
+    // Show search page
+    const searchPage = document.getElementById('searchPage');
+    if (searchPage) {
+        searchPage.classList.remove('hidden');
+        searchPage.classList.add('fade-in');
+    }
+    
+    // Show bottom navigation with animation
+    setTimeout(() => {
+        const bottomNav = document.querySelector('.bottom-nav');
+        if (bottomNav) {
+            bottomNav.classList.remove('hidden');
+        }
+    }, 300);
+}
+
 // Set up all event listeners
 function setupEventListeners() {
     // Welcome screen continue button
@@ -56,12 +85,7 @@ function setupEventListeners() {
     if (welcomeButton) {
         welcomeButton.addEventListener('click', function() {
             localStorage.setItem('hasSeenWelcome', 'true');
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('searchPage').classList.remove('hidden');
-            
-            // Add fade animations
-            document.getElementById('welcomeScreen').classList.add('fade-out');
-            document.getElementById('searchPage').classList.add('fade-in');
+            showMainApp();
         });
     }
     
@@ -102,7 +126,12 @@ function setupEventListeners() {
                     
                     // Add animation
                     document.querySelector('.preview-section').classList.add('fade-in');
-                    document.querySelector('.upload-section').classList.add('fade-out');
+                    
+                    // Don't hide upload section, just make it less visible
+                    const uploadSection = document.querySelector('.upload-section');
+                    uploadSection.style.opacity = '0.2';
+                    uploadSection.style.transform = 'scale(0.95)';
+                    uploadSection.style.transition = 'all 0.3s ease';
                 };
                 reader.readAsDataURL(file);
             }
@@ -116,9 +145,10 @@ function setupEventListeners() {
             document.querySelector('.preview-section').style.display = 'none';
             document.getElementById('photoInput').value = '';
             
-            // Add animation
-            document.querySelector('.preview-section').classList.remove('fade-in');
-            document.querySelector('.upload-section').classList.remove('fade-out');
+            // Restore upload section
+            const uploadSection = document.querySelector('.upload-section');
+            uploadSection.style.opacity = '1';
+            uploadSection.style.transform = 'scale(1)';
         });
     }
     
@@ -152,6 +182,11 @@ function setupEventListeners() {
                 // Reset UI
                 document.querySelector('.preview-section').style.display = 'none';
                 document.getElementById('photoInput').value = '';
+                
+                // Restore upload section
+                const uploadSection = document.querySelector('.upload-section');
+                uploadSection.style.opacity = '1';
+                uploadSection.style.transform = 'scale(1)';
             }, 2000);
         });
     }

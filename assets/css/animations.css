@@ -208,4 +208,33 @@ button:active {
 
 .notification.info {
     border-left-color: var(--primary-color);
+}
+
+/* Navigation animation */
+.bottom-nav {
+    transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+}
+
+.bottom-nav.hidden {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Welcome screen transition */
+.welcome-screen {
+    transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s ease;
+}
+
+.welcome-screen.hidden {
+    opacity: 0;
+    transform: translateY(-20px);
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Upload box hover effect */
+.upload-box:active {
+    transform: scale(0.98);
+    background-color: rgba(255, 182, 193, 0.05);
 } 
