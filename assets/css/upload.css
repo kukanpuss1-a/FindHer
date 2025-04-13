@@ -1,15 +1,16 @@
 .upload-section {
     width: 100%;
     max-width: 450px;
-    margin: 0 auto;
+    margin: 20px 0;
+    padding: 20px;
     animation: fadeIn 0.5s ease;
 }
 
 .upload-box {
-    background: rgba(0, 0, 0, 0.3);
-    border: 2px dashed rgba(0, 229, 255, 0.4);
-    border-radius: var(--border-radius);
-    padding: calc(var(--spacing-unit) * 2);
+    background: var(--card-background);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 40px 20px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -19,9 +20,9 @@
 }
 
 .upload-box:hover {
-    background: rgba(0, 229, 255, 0.05);
-    transform: scale(1.02);
     border-color: var(--primary-color);
+    background: var(--background-color);
+    transform: scale(1.02);
     box-shadow: var(--glow-effect), 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -45,7 +46,7 @@
 }
 
 .upload-icon {
-    font-size: 3rem;
+    font-size: 48px;
     color: var(--primary-color);
     margin-bottom: 15px;
     position: relative;
@@ -66,15 +67,15 @@
 }
 
 .upload-text {
+    font-size: 18px;
+    font-weight: 600;
     color: var(--text-color);
-    font-size: 1.3rem;
-    margin-bottom: 15px;
-    font-weight: 500;
+    margin-bottom: 10px;
 }
 
 .upload-subtext {
+    font-size: 14px;
     color: var(--text-secondary);
-    font-size: 0.9rem;
     margin-bottom: 20px;
 }
 

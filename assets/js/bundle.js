@@ -816,7 +816,10 @@ class NavigationHandler {
                 profileUsername.textContent = user.username ? '@' + user.username : '';
             }
             
-            // Telegram doesn't provide avatar in WebApp, would need to be fetched separately
+            // Set Telegram avatar
+            if (user.photo_url) {
+                profileAvatar.src = user.photo_url;
+            }
         }
     }
 
