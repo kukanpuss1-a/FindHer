@@ -45,27 +45,32 @@
                     <span>Buy FH coins at affordable rates</span>
                 </div>
             </div>
+            <button class="welcome-button">Continue</button>
         </div>
-        <button class="welcome-button" id="welcomeButton">Continue</button>
     </div>
 
     <!-- Main Content -->
     <div class="container page-content" id="searchPage">
-        <h1 class="section-title mb-3">Image Search</h1>
+        <div class="app-header">
+            <h1 class="app-title">FindHer</h1>
+            <p class="app-subtitle">MINI-APP</p>
+        </div>
+
+        <h1 class="search-title">Image Search</h1>
         
         <!-- Currency Display -->
-        <div class="currency-display">
-            <span class="currency-icon"><i class="fa-solid fa-coins"></i></span>
-            <span class="currency-amount">0</span>
-            <span class="currency-label">FH</span>
+        <div class="currency-badge">
+            <i class="fa-solid fa-coins"></i>
+            <span>0 FH</span>
         </div>
         
         <!-- Upload Section -->
         <div class="upload-section">
-            <div class="card upload-box">
-                <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div class="upload-box">
+                <div class="upload-icon-container">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                </div>
                 <div class="upload-text">Upload Photo</div>
-                <div class="upload-subtext">Drag & drop or click to select</div>
                 <input type="file" id="photoInput" accept="image/*" hidden>
             </div>
         </div>
@@ -126,51 +131,73 @@
 
     <!-- History Page -->
     <div class="container page-content hidden" id="historyPage">
-        <h1 class="section-title mb-3">Search History</h1>
+        <h1 class="history-title">Search History</h1>
         <div class="history-section">
-            <!-- History items will be populated here -->
+            <div class="history-item">
+                <div class="history-item-image">
+                    <i class="fa-regular fa-image"></i>
+                </div>
+                <div class="history-item-details">
+                    <div class="history-item-date">2023-11-10</div>
+                    <div class="history-item-results">Found on 3 websites</div>
+                </div>
+            </div>
+            <div class="history-item">
+                <div class="history-item-image">
+                    <i class="fa-regular fa-image"></i>
+                </div>
+                <div class="history-item-details">
+                    <div class="history-item-date">2023-11-15</div>
+                    <div class="history-item-results">Found on 5 websites</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Profile Page -->
     <div class="container page-content hidden" id="profilePage">
-        <div class="profile-section">
-            <div class="profile-header">
+        <div class="profile-header">
+            <div class="app-header">
+                <h1 class="app-title">FindHer</h1>
+                <p class="app-subtitle">МИНИ-ПРИЛОЖЕНИЕ</p>
+                <button class="settings-button">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+            
+            <div class="profile-avatar-container">
                 <div class="profile-avatar">
-                    <img src="https://via.placeholder.com/150" alt="Profile Image" id="profileAvatar">
+                    <img src="" alt="Profile" id="profileAvatar">
                 </div>
-                <div class="profile-info">
-                    <h2 class="profile-name" id="profileName">User</h2>
-                    <p class="profile-username" id="profileUsername">@username</p>
-                    <p class="profile-stats">
-                        <span class="currency-icon"><i class="fa-solid fa-coins"></i></span>
-                        <span class="currency-amount">0</span>
-                        <span class="currency-label">FH</span>
-                    </p>
-                </div>
+                <button class="avatar-settings-button">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
             
-            <div class="profile-tabs">
-                <div class="profile-tab active" data-tab="transactions">Transactions</div>
-                <div class="profile-tab" data-tab="archive">Search Archive</div>
+            <div class="profile-info">
+                <h2 class="profile-name" id="profileName">Max</h2>
+                <p class="profile-username" id="profileUsername">@hanibalprofessor</p>
             </div>
-            
-            <div class="profile-tab-content active" id="transactionsTab">
-                <div class="transaction-list">
-                    <!-- Transaction items will be populated here -->
-                    <div class="empty-state text-center">
-                        <p>No transactions yet</p>
-                    </div>
+        </div>
+
+        <div class="profile-actions">
+            <button class="action-button">
+                <i class="fa-regular fa-folder"></i>
+                Search Archive
+            </button>
+            <button class="action-button">
+                <i class="fa-solid fa-chart-line"></i>
+                Transactions
+            </button>
+        </div>
+
+        <div class="profile-content">
+            <div class="start-search-card">
+                <div class="search-icon">
+                    <i class="fa-regular fa-image"></i>
                 </div>
-            </div>
-            
-            <div class="profile-tab-content" id="archiveTab">
-                <div class="search-archive">
-                    <!-- Archive items will be populated here -->
-                    <div class="empty-state text-center">
-                        <p>No search results yet</p>
-                    </div>
-                </div>
+                <h3>Start your first search</h3>
+                <button class="search-now-button">Search now</button>
             </div>
         </div>
     </div>
@@ -219,7 +246,7 @@
             <span class="nav-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
             <span class="nav-text">Search</span>
         </button>
-        <button class="nav-item" data-page="tariffs">
+        <button class="nav-item" data-page="coins">
             <span class="nav-icon"><i class="fa-solid fa-coins"></i></span>
             <span class="nav-text">Coins</span>
         </button>
