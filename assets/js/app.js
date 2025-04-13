@@ -7,6 +7,12 @@ let fhBalance = 0;
 let currentUser = null;
 let isAuthenticated = false;
 
+// Variables for payments and platforms
+let selectedPaymentMethod = null;
+let selectedCryptoCurrency = null;
+let selectedCoinPackage = null;
+let selectedPlatforms = ['onlyfans']; // By default, only OnlyFans is available
+
 // Initialize the application
 function initApp() {
     // Hide loading screen once the app is ready
@@ -162,32 +168,8 @@ function setupEventListeners() {
                 return;
             }
             
-            // Show loading for search
-            document.body.classList.remove('loaded');
-            
-            // Simulate search (would be a real API call in production)
-            setTimeout(() => {
-                // Update balance
-                fhBalance -= 250;
-                updateBalanceDisplay();
-                localStorage.setItem('fhBalance', fhBalance);
-                
-                // Add search to history
-                addSearchToHistory();
-                
-                // Hide loading and show results
-                document.body.classList.add('loaded');
-                showNotification('Search completed successfully!', 'success');
-                
-                // Reset UI
-                document.querySelector('.preview-section').style.display = 'none';
-                document.getElementById('photoInput').value = '';
-                
-                // Restore upload section
-                const uploadSection = document.querySelector('.upload-section');
-                uploadSection.style.opacity = '1';
-                uploadSection.style.transform = 'scale(1)';
-            }, 2000);
+            // Open platforms selection modal
+            openModal('platformsModal');
         });
     }
     
@@ -211,6 +193,143 @@ function setupEventListeners() {
             }
         });
     });
+
+    // Coins page buy buttons
+    const buyButtons = document.querySelectorAll('.buy-button');
+    if (buyButtons) {
+        buyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Get package details
+                const amount = parseInt(this.getAttribute('data-amount'), 10);
+                const price = parseFloat(this.getAttribute('data-price'));
+                
+                // Store selected package
+                selectedCoinPackage = {
+                    amount: amount,
+                    price: price
+                };
+                
+                // Update payment modal
+                document.getElementById('coinAmount').textContent = amount;
+                document.getElementById('coinPrice').textContent = price;
+                
+                // Show payment modal
+                openModal('paymentModal');
+            });
+        });
+    }
+    
+    // Payment method selection
+    const paymentMethods = document.querySelectorAll('.payment-method');
+    if (paymentMethods) {
+        paymentMethods.forEach(method => {
+            method.addEventListener('click', function() {
+                // Remove selected class from all methods
+                paymentMethods.forEach(m => m.classList.remove('selected'));
+                
+                // Add selected class to clicked method
+                this.classList.add('selected');
+                
+                // Store selected method
+                selectedPaymentMethod = this.getAttribute('data-method');
+                
+                // Enable proceed button
+                document.querySelector('.payment-confirm').disabled = false;
+            });
+        });
+    }
+    
+    // Payment confirm button
+    const paymentConfirm = document.querySelector('.payment-confirm');
+    if (paymentConfirm) {
+        paymentConfirm.addEventListener('click', function() {
+            if (selectedPaymentMethod === 'cryptobot') {
+                // Open crypto selection modal for CryptoBot
+                closeModal('paymentModal');
+                openModal('cryptoBotModal');
+            } else {
+                // For other payment methods, simulate payment process
+                processPayment(selectedPaymentMethod);
+            }
+        });
+    }
+    
+    // CryptoBot currency selection
+    const cryptoMethods = document.querySelectorAll('.crypto-method');
+    if (cryptoMethods) {
+        cryptoMethods.forEach(method => {
+            method.addEventListener('click', function() {
+                // Remove selected class from all methods
+                cryptoMethods.forEach(m => m.classList.remove('selected'));
+                
+                // Add selected class to clicked method
+                this.classList.add('selected');
+                
+                // Store selected crypto
+                selectedCryptoCurrency = this.getAttribute('data-crypto');
+                
+                // Enable confirm button
+                document.querySelector('.crypto-confirm').disabled = false;
+            });
+        });
+    }
+    
+    // CryptoBot confirm button
+    const cryptoConfirm = document.querySelector('.crypto-confirm');
+    if (cryptoConfirm) {
+        cryptoConfirm.addEventListener('click', function() {
+            // Process payment with CryptoBot and selected cryptocurrency
+            processPayment('cryptobot', selectedCryptoCurrency);
+            closeModal('cryptoBotModal');
+        });
+    }
+    
+    // Modal close buttons
+    const closeButtons = document.querySelectorAll('.close-modal');
+    if (closeButtons) {
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Get the parent modal
+                const modal = this.closest('.modal');
+                if (modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+    }
+    
+    // Platform selection
+    const platformMethods = document.querySelectorAll('.platform-method:not(.disabled)');
+    if (platformMethods) {
+        platformMethods.forEach(platform => {
+            platform.addEventListener('click', function() {
+                // Toggle active class
+                this.classList.toggle('active');
+                
+                // Update selected platforms
+                const platformId = this.getAttribute('data-platform');
+                if (this.classList.contains('active')) {
+                    // Add to selected platforms if not already included
+                    if (!selectedPlatforms.includes(platformId)) {
+                        selectedPlatforms.push(platformId);
+                    }
+                } else {
+                    // Remove from selected platforms
+                    selectedPlatforms = selectedPlatforms.filter(p => p !== platformId);
+                }
+            });
+        });
+    }
+    
+    // Platform confirm button
+    const platformConfirm = document.querySelector('.platform-confirm');
+    if (platformConfirm) {
+        platformConfirm.addEventListener('click', function() {
+            // Process search with selected platforms
+            processSearch(selectedPlatforms);
+            closeModal('platformsModal');
+        });
+    }
 }
 
 // Navigate to specific page
@@ -263,8 +382,14 @@ function updateUserInfo(user) {
         if (user.photo_url) {
             profileAvatar.src = user.photo_url;
         } else {
-            // Default avatar
-            profileAvatar.src = 'assets/images/default-avatar.png';
+            // Use default Telegram avatar
+            const defaultAvatar = document.getElementById('defaultAvatar');
+            if (defaultAvatar) {
+                profileAvatar.src = defaultAvatar.src;
+            } else {
+                // Fallback to a default placeholder
+                profileAvatar.src = 'https://t.me/i/userpic/320/default_profile.jpg';
+            }
         }
     }
 }
@@ -343,7 +468,7 @@ function renderHistoryItems(historyData) {
 }
 
 // Add new search to history
-function addSearchToHistory() {
+function addSearchToHistory(platforms = ['onlyfans']) {
     const savedHistory = localStorage.getItem('searchHistory');
     let historyData = [];
     
@@ -359,7 +484,8 @@ function addSearchToHistory() {
     const newSearch = {
         id: 'search_' + Date.now(),
         date: new Date().toISOString().slice(0, 10),
-        results: 'Processing... Please check back later.'
+        results: 'Processing... Please check back later.',
+        platforms: platforms
     };
     
     // Add to history
@@ -398,4 +524,120 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         notification.classList.remove('show');
     }, 3000);
+}
+
+// Process payment
+function processPayment(method, cryptoType = null) {
+    // Show loading screen
+    document.body.classList.remove('loaded');
+    
+    // Simulate payment process
+    setTimeout(() => {
+        // Add coins to balance
+        if (selectedCoinPackage) {
+            fhBalance += selectedCoinPackage.amount;
+            updateBalanceDisplay();
+            localStorage.setItem('fhBalance', fhBalance);
+            
+            // Add transaction to history
+            addTransaction(selectedCoinPackage.amount, selectedCoinPackage.price, method, cryptoType);
+        }
+        
+        // Hide loading and show success
+        document.body.classList.add('loaded');
+        
+        // Show success notification
+        let methodName = method === 'cryptobot' ? `CryptoBot (${cryptoType})` : method;
+        showNotification(`Payment successful via ${methodName}! Added ${selectedCoinPackage.amount} FH coins.`, 'success');
+        
+        // Reset selection
+        selectedPaymentMethod = null;
+        selectedCryptoCurrency = null;
+        selectedCoinPackage = null;
+    }, 2000);
+}
+
+// Process search with selected platforms
+function processSearch(platforms) {
+    // Check if user has enough balance
+    if (fhBalance < 250) {
+        showNotification('Insufficient FH balance. Please purchase more coins.', 'error');
+        navigateToPage('coins');
+        return;
+    }
+    
+    // Show loading screen
+    document.body.classList.remove('loaded');
+    
+    // Simulate search process
+    setTimeout(() => {
+        // Deduct coins
+        fhBalance -= 250;
+        updateBalanceDisplay();
+        localStorage.setItem('fhBalance', fhBalance);
+        
+        // Add search to history with platforms
+        addSearchToHistory(platforms);
+        
+        // Hide loading and show results
+        document.body.classList.add('loaded');
+        
+        // Show success notification
+        showNotification(`Search completed on ${platforms.join(', ')}!`, 'success');
+        
+        // Reset UI
+        document.querySelector('.preview-section').style.display = 'none';
+        document.getElementById('photoInput').value = '';
+        
+        // Restore upload section
+        const uploadSection = document.querySelector('.upload-section');
+        uploadSection.style.opacity = '1';
+        uploadSection.style.transform = 'scale(1)';
+    }, 3000);
+}
+
+// Add transaction to history
+function addTransaction(amount, price, method, cryptoType = null) {
+    const savedTransactions = localStorage.getItem('transactions');
+    let transactions = [];
+    
+    if (savedTransactions) {
+        try {
+            transactions = JSON.parse(savedTransactions);
+        } catch (e) {
+            console.error('Failed to parse transactions', e);
+        }
+    }
+    
+    // Create new transaction
+    const methodName = method === 'cryptobot' ? `CryptoBot (${cryptoType})` : method;
+    const newTransaction = {
+        id: 'tx_' + Date.now(),
+        date: new Date().toISOString().slice(0, 10),
+        amount: amount,
+        price: price,
+        method: methodName
+    };
+    
+    // Add to transactions
+    transactions.unshift(newTransaction);
+    
+    // Save updated transactions
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+}
+
+// Open modal
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('show');
+    }
+}
+
+// Close modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+    }
 } 

@@ -225,10 +225,10 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="text-center">Purchasing <span id="coinAmount">0</span> FH for <span id="coinPrice">0</span> USDT</p>
+                <p class="payment-info">Purchasing <span id="coinAmount">0</span> FH for <span id="coinPrice">0</span> USDT</p>
                 
                 <div class="payment-methods">
-                    <div class="payment-method" data-method="telegram">
+                    <div class="payment-method" data-method="cryptobot">
                         <div class="payment-icon"><i class="fa-brands fa-telegram"></i></div>
                         <div class="payment-name">Telegram CryptoBot</div>
                     </div>
@@ -236,21 +236,80 @@
                         <div class="payment-icon"><i class="fa-solid fa-t"></i></div>
                         <div class="payment-name">USDT (TRC20)</div>
                     </div>
-                    <div class="payment-method" data-method="usdt-ton">
-                        <div class="payment-icon"><i class="fa-solid fa-diamond"></i></div>
-                        <div class="payment-name">USDT (TON)</div>
-                    </div>
                     <div class="payment-method" data-method="monero">
                         <div class="payment-icon"><i class="fa-solid fa-circle-xmark"></i></div>
                         <div class="payment-name">MONERO</div>
                     </div>
-                    <div class="payment-method" data-method="btc">
-                        <div class="payment-icon"><i class="fa-brands fa-bitcoin"></i></div>
-                        <div class="payment-name">Bitcoin</div>
+                </div>
+                
+                <button class="btn-primary payment-confirm" disabled>Proceed to Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CryptoBot Currency Modal -->
+    <div class="modal" id="cryptoBotModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Select Cryptocurrency</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="payment-info">Choose cryptocurrency for CryptoBot payment</p>
+                
+                <div class="crypto-methods">
+                    <div class="crypto-method" data-crypto="BTC">
+                        <div class="crypto-icon"><i class="fa-brands fa-bitcoin"></i></div>
+                        <div class="crypto-name">Bitcoin (BTC)</div>
+                    </div>
+                    <div class="crypto-method" data-crypto="TON">
+                        <div class="crypto-icon"><i class="fa-solid fa-diamond"></i></div>
+                        <div class="crypto-name">Toncoin (TON)</div>
+                    </div>
+                    <div class="crypto-method" data-crypto="USDT">
+                        <div class="crypto-icon"><i class="fa-solid fa-t"></i></div>
+                        <div class="crypto-name">USDT</div>
+                    </div>
+                    <div class="crypto-method" data-crypto="ETH">
+                        <div class="crypto-icon"><i class="fa-brands fa-ethereum"></i></div>
+                        <div class="crypto-name">Ethereum (ETH)</div>
                     </div>
                 </div>
                 
-                <button class="btn-primary payment-confirm">Proceed to Payment</button>
+                <button class="btn-primary crypto-confirm" disabled>Continue to CryptoBot</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Platforms Modal -->
+    <div class="modal" id="platformsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Select Search Platforms</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="platform-info">Choose where to search for this image</p>
+                
+                <div class="platform-methods">
+                    <div class="platform-method active" data-platform="onlyfans">
+                        <div class="platform-icon"><i class="fa-solid fa-heart"></i></div>
+                        <div class="platform-name">OnlyFans</div>
+                        <div class="platform-badge available">Available</div>
+                    </div>
+                    <div class="platform-method disabled" data-platform="instagram">
+                        <div class="platform-icon"><i class="fa-brands fa-instagram"></i></div>
+                        <div class="platform-name">Instagram</div>
+                        <div class="platform-badge soon">Coming Soon</div>
+                    </div>
+                    <div class="platform-method disabled" data-platform="tiktok">
+                        <div class="platform-icon"><i class="fa-brands fa-tiktok"></i></div>
+                        <div class="platform-name">TikTok</div>
+                        <div class="platform-badge soon">Coming Soon</div>
+                    </div>
+                </div>
+                
+                <button class="btn-primary platform-confirm">Start Search</button>
             </div>
         </div>
     </div>
@@ -318,5 +377,8 @@
         }, 5000);
     </script>
     <script src="assets/js/app.js"></script>
+
+    <!-- Hidden image for default avatar -->
+    <img src="https://t.me/i/userpic/320/default_profile.jpg" id="defaultAvatar" style="display: none;">
 </body>
 </html> 

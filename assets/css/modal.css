@@ -12,6 +12,11 @@
     backdrop-filter: blur(5px);
 }
 
+.modal.show {
+    display: flex;
+    animation: modalFadeIn 0.3s ease forwards;
+}
+
 .modal-content {
     background: var(--background-card);
     border-radius: 20px;
@@ -22,6 +27,7 @@
     border: 1px solid var(--border-color);
     box-shadow: var(--card-shadow);
     animation: modalSlideUp 0.3s ease forwards;
+    overflow: hidden;
 }
 
 .modal-header {
@@ -34,7 +40,7 @@
 }
 
 .modal-header h2 {
-    color: var(--text-color);
+    color: var(--primary-color);
     font-size: 20px;
     font-weight: 600;
     margin: 0;
@@ -54,44 +60,103 @@
     color: var(--primary-color);
 }
 
-.payment-methods {
+/* Payment methods */
+.payment-info,
+.platform-info {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.payment-methods,
+.crypto-methods,
+.platform-methods {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     margin: 20px 0;
 }
 
-.payment-method {
+.payment-method,
+.crypto-method,
+.platform-method {
     background: var(--background-dark);
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     padding: 15px;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 10px;
+    position: relative;
 }
 
-.payment-method:hover {
+.payment-method:hover,
+.crypto-method:hover,
+.platform-method:not(.disabled):hover {
     border-color: var(--primary-color);
-    box-shadow: var(--pink-glow);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-.payment-method.selected {
+.payment-method.selected,
+.crypto-method.selected,
+.platform-method.active {
     border-color: var(--primary-color);
-    background: linear-gradient(135deg, var(--background-card), var(--background-dark));
+    background: linear-gradient(135deg, rgba(255, 182, 193, 0.1), rgba(18, 18, 18, 0.7));
+    box-shadow: 0 5px 15px rgba(255, 182, 193, 0.1);
 }
 
-.payment-icon {
+.payment-icon,
+.crypto-icon,
+.platform-icon {
     color: var(--primary-color);
-    font-size: 24px;
+    font-size: 28px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.payment-name {
+.payment-name,
+.crypto-name,
+.platform-name {
     color: var(--text-color);
     font-size: 14px;
     font-weight: 500;
+    text-align: center;
+}
+
+.platform-method.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.platform-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.platform-badge.available {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.platform-badge.soon {
+    background: rgba(255, 182, 193, 0.2);
+    color: var(--primary-color);
+    border: 1px solid rgba(255, 182, 193, 0.3);
 }
 
 .btn-primary {
@@ -106,14 +171,23 @@
     transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: var(--pink-glow);
+    box-shadow: 0 5px 15px rgba(255, 182, 193, 0.3);
 }
 
 .btn-primary:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes modalSlideUp {
