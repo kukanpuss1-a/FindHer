@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="assets/css/modal.css">
     <link rel="stylesheet" href="assets/css/navigation.css">
     <link rel="stylesheet" href="assets/css/upload.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -50,7 +51,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container page-content" id="searchPage">
+    <div class="container page-content hidden" id="searchPage">
         <div class="app-header">
             <h1 class="app-title">FindHer</h1>
             <p class="app-subtitle">MINI-APP</p>
@@ -79,58 +80,72 @@
         <div class="preview-section" style="display: none;">
             <div class="preview-container">
                 <img id="previewImage" src="" alt="Preview">
-                <div class="file-type-badge">JPG</div>
+                <div class="file-info">
+                    <div class="file-name">Image Preview</div>
+                    <div class="file-size">Ready to search</div>
+                </div>
             </div>
             <div class="preview-actions">
-                <button class="btn-search"><i class="fa-solid fa-magnifying-glass"></i> Search Online</button>
-                <button class="btn-cancel"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                <button class="btn-search">Search Online</button>
+                <button class="btn-cancel">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Tariffs Page -->
-    <div class="container page-content hidden" id="tariffsPage">
-        <h1 class="section-title mb-3">FH Coins Packages</h1>
-        <p class="text-center mb-2">Purchase FH coins to use for image searches</p>
-        <p class="text-center mb-3">1 search = 250 FH</p>
+    <!-- Coins Page -->
+    <div class="container page-content hidden" id="coinsPage">
+        <div class="app-header">
+            <h1 class="app-title">FindHer</h1>
+            <p class="app-subtitle">MINI-APP</p>
+        </div>
+
+        <h1 class="coins-title">FH Coins Packages</h1>
+        <p class="coins-description">Purchase FH coins to use for image searches</p>
+        <p class="coins-info">1 search = 250 FH</p>
         
-        <div class="tariffs-container">
-            <div class="tariff-option">
+        <div class="coins-grid">
+            <div class="coin-package">
                 <h3>Basic</h3>
                 <p class="price">7.99 USDT</p>
-                <p class="details">250 FH coins</p>
+                <p class="amount">250 FH</p>
                 <p class="searches">(1 search)</p>
-                <button class="select-tariff" data-amount="250" data-price="7.99">Select Package</button>
+                <button class="buy-button" data-amount="250" data-price="7.99">Select Package</button>
             </div>
             
-            <div class="tariff-option best-value">
+            <div class="coin-package popular">
+                <div class="popular-badge">Popular</div>
                 <h3>Standard</h3>
                 <p class="price">11.99 USDT</p>
-                <p class="details">500 FH coins</p>
+                <p class="amount">500 FH</p>
                 <p class="searches">(2 searches)</p>
-                <button class="select-tariff" data-amount="500" data-price="11.99">Select Package</button>
+                <button class="buy-button" data-amount="500" data-price="11.99">Select Package</button>
             </div>
             
-            <div class="tariff-option">
+            <div class="coin-package">
                 <h3>Premium</h3>
                 <p class="price">16.99 USDT</p>
-                <p class="details">750 FH coins</p>
+                <p class="amount">750 FH</p>
                 <p class="searches">(3 searches)</p>
-                <button class="select-tariff" data-amount="750" data-price="16.99">Select Package</button>
+                <button class="buy-button" data-amount="750" data-price="16.99">Select Package</button>
             </div>
             
-            <div class="tariff-option">
+            <div class="coin-package">
                 <h3>Ultimate</h3>
                 <p class="price">19.99 USDT</p>
-                <p class="details">1000 FH coins</p>
+                <p class="amount">1000 FH</p>
                 <p class="searches">(4 searches)</p>
-                <button class="select-tariff" data-amount="1000" data-price="19.99">Select Package</button>
+                <button class="buy-button" data-amount="1000" data-price="19.99">Select Package</button>
             </div>
         </div>
     </div>
 
     <!-- History Page -->
     <div class="container page-content hidden" id="historyPage">
+        <div class="app-header">
+            <h1 class="app-title">FindHer</h1>
+            <p class="app-subtitle">MINI-APP</p>
+        </div>
+
         <h1 class="history-title">Search History</h1>
         <div class="history-section">
             <div class="history-item">
@@ -167,7 +182,7 @@
             
             <div class="profile-avatar-container">
                 <div class="profile-avatar">
-                    <img src="" alt="Profile" id="profileAvatar">
+                    <img src="assets/images/default-avatar.png" alt="Profile" id="profileAvatar">
                 </div>
                 <button class="avatar-settings-button">
                     <i class="fa-solid fa-gear"></i>
@@ -210,7 +225,7 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="text-center mb-2">Purchasing <span id="coinAmount">0</span> FH for <span id="coinPrice">0</span> USDT</p>
+                <p class="text-center">Purchasing <span id="coinAmount">0</span> FH for <span id="coinPrice">0</span> USDT</p>
                 
                 <div class="payment-methods">
                     <div class="payment-method" data-method="telegram">
@@ -235,7 +250,7 @@
                     </div>
                 </div>
                 
-                <button class="btn-primary payment-confirm mt-3" disabled>Proceed to Payment</button>
+                <button class="btn-primary payment-confirm">Proceed to Payment</button>
             </div>
         </div>
     </div>
@@ -302,6 +317,6 @@
             console.log('Fallback: Forced loading screen to hide after absolute timeout');
         }, 5000);
     </script>
-    <script src="assets/js/bundle.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 </html> 

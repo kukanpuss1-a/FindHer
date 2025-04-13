@@ -979,4 +979,190 @@ body.loaded .loading-screen {
     color: var(--primary-color);
     font-size: 18px;
     font-weight: 500;
+}
+
+/* Coins Page Styles */
+.coins-title {
+    color: var(--primary-color);
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.coins-description {
+    color: var(--text-secondary);
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.coins-info {
+    color: var(--primary-color);
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.coins-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 0 15px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.coin-package {
+    background: var(--background-card);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 20px 15px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.coin-package:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.coin-package h3 {
+    color: var(--text-color);
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.coin-package .price {
+    color: var(--primary-color);
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.coin-package .amount {
+    color: var(--text-color);
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.coin-package .searches {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.buy-button {
+    background: rgba(255, 182, 193, 0.1);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 100px;
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.buy-button:hover {
+    background: var(--primary-color);
+    color: var(--background-dark);
+}
+
+.popular {
+    border: 1px solid var(--primary-color);
+}
+
+.popular-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: var(--background-dark);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+/* Preview Section Styles */
+.preview-section {
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
+}
+
+.preview-container {
+    background: var(--background-card);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.preview-container img {
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    object-fit: cover;
+    max-height: 250px;
+}
+
+.file-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-name {
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.file-size {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-search, .btn-cancel {
+    flex: 1;
+    padding: 12px;
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.btn-search {
+    background: var(--primary-color);
+    color: var(--background-dark);
+    border: none;
+}
+
+.btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-search:hover {
+    background: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255, 182, 193, 0.3);
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
 } 
